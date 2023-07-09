@@ -6,12 +6,12 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="HandheldFriendly" content="True">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
-    <meta name="description" content="Use After Free use after free   free之后的变量，该变量的堆内存处的内存指针还在指向该内存处，所以当我们下一次申请同样大小的变量时，可以申请到上一个变量的位置      使用gdb可视化观察堆     free()     观察堆   set disassembly-flavor intel   set pagination off   disassembly m">
+    <meta name="description" content="use after free   free之后的变量，该变量的堆内存处的内存指针还在指向该内存处，所以当我们下一次申请同样大小的变量时，可以申请到上一个变量的位置      使用gdb可视化观察堆     free()     观察堆   set disassembly-flavor intel   set pagination off   disassembly main   info pro">
 <meta property="og:type" content="article">
 <meta property="og:title" content="UAFnote">
 <meta property="og:url" content="http://yushusu.github.io/2022/07/08/UAFnote/">
 <meta property="og:site_name" content="YUSHUSU">
-<meta property="og:description" content="Use After Free use after free   free之后的变量，该变量的堆内存处的内存指针还在指向该内存处，所以当我们下一次申请同样大小的变量时，可以申请到上一个变量的位置      使用gdb可视化观察堆     free()     观察堆   set disassembly-flavor intel   set pagination off   disassembly m">
+<meta property="og:description" content="use after free   free之后的变量，该变量的堆内存处的内存指针还在指向该内存处，所以当我们下一次申请同样大小的变量时，可以申请到上一个变量的位置      使用gdb可视化观察堆     free()     观察堆   set disassembly-flavor intel   set pagination off   disassembly main   info pro">
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="http://yushusu.github.io/2022/07/08/UAFnote/Untitled.png">
 <meta property="og:image" content="http://yushusu.github.io/2022/07/08/UAFnote/Untitled1.png">
@@ -43,7 +43,7 @@
 <meta property="og:image" content="http://yushusu.github.io/2022/07/08/UAFnote/Untitled27.png">
 <meta property="og:image" content="http://yushusu.github.io/2022/07/08/UAFnote/Untitled28.png">
 <meta property="article:published_time" content="2022-07-08T09:55:11.000Z">
-<meta property="article:modified_time" content="2023-07-09T02:39:13.658Z">
+<meta property="article:modified_time" content="2023-07-09T02:41:38.376Z">
 <meta property="article:author" content="yushusu">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://yushusu.github.io/2022/07/08/UAFnote/Untitled.png">
@@ -97,7 +97,7 @@
     <span id="nav">
       <ul>
         <!--
-       --><li><a href="/">Home</a></li><!--
+       --><li><a href="/archives/">Home</a></li><!--
      --><!--
        --><li><a href="/about/">About</a></li><!--
      --><!--
@@ -143,10 +143,6 @@
     </div>
     
     
-      <div id="toc">
-        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Use-After-Free"><span class="toc-number">1.</span> <span class="toc-text">Use After Free</span></a></li></ol>
-      </div>
-    
   </span>
 </div>
 
@@ -184,7 +180,7 @@
   
 
   <div class="content e-content" itemprop="articleBody">
-    <h1 id="Use-After-Free"><a href="#Use-After-Free" class="headerlink" title="Use After Free"></a>Use After Free</h1><ul>
+    <ul>
 <li><p>use after free</p>
 <p>  free之后的变量，该变量的堆内存处的内存指针还在指向该内存处，所以当我们下一次申请同样大小的变量时，可以申请到上一个变量的位置</p>
   <img src="/2022/07/08/UAFnote/Untitled.png" class title="Untitled">
@@ -305,7 +301,7 @@
     <div id="nav-footer" style="display: none">
       <ul>
         
-          <li><a href="/">Home</a></li>
+          <li><a href="/archives/">Home</a></li>
         
           <li><a href="/about/">About</a></li>
         
@@ -317,10 +313,6 @@
     </div>
 
     
-    
-      <div id="toc-footer" style="display: none">
-        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#Use-After-Free"><span class="toc-number">1.</span> <span class="toc-text">Use After Free</span></a></li></ol>
-      </div>
     
 
     <div id="share-footer" style="display: none">
@@ -343,8 +335,6 @@
     <div id="actions-footer">
         <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
         
-          <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fa-solid fa-list fa-lg" aria-hidden="true"></i> TOC</a>
-        
         <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
         <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
     </div>
@@ -365,7 +355,7 @@
     <nav>
       <ul>
         <!--
-       --><li><a href="/">Home</a></li><!--
+       --><li><a href="/archives/">Home</a></li><!--
      --><!--
        --><li><a href="/about/">About</a></li><!--
      --><!--

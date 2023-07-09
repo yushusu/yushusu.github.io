@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="前端 编写词法分析器   Lex（或其 GNU 版本，Flex）：词法分析器的生成工具，基于一些规则来工作的，这些规则用“正则文法”表达，符合正则文法的表达式称为“正则表达式”。生成工具可以读入正则表达式，生成一种叫“有限自动机”的算法，来完成具体的词法分析工作。   有限自动机 ：例如，词法分析程序在扫描 age 的时候，处于“标识符”状态，等它遇到一个 &gt; 符号，就切换到“比较操作符">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CompilerNote">
+<meta property="og:url" content="http://yushusu.github.io/2022/07/08/CompilerNote/">
+<meta property="og:site_name" content="YUSHUSU">
+<meta property="og:description" content="前端 编写词法分析器   Lex（或其 GNU 版本，Flex）：词法分析器的生成工具，基于一些规则来工作的，这些规则用“正则文法”表达，符合正则文法的表达式称为“正则表达式”。生成工具可以读入正则表达式，生成一种叫“有限自动机”的算法，来完成具体的词法分析工作。   有限自动机 ：例如，词法分析程序在扫描 age 的时候，处于“标识符”状态，等它遇到一个 &gt; 符号，就切换到“比较操作符">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://yushusu.github.io/2022/07/08/CompilerNote/Untitled.png">
+<meta property="og:image" content="http://yushusu.github.io/2022/07/08/CompilerNote/Untitled1.png">
+<meta property="og:image" content="http://yushusu.github.io/2022/07/08/CompilerNote/Untitled2.png">
+<meta property="og:image" content="http://yushusu.github.io/2022/07/08/CompilerNote/Untitled3.png">
+<meta property="og:image" content="http://yushusu.github.io/2022/07/08/CompilerNote/Untitled4.png">
+<meta property="og:image" content="http://yushusu.github.io/2022/07/08/CompilerNote/Untitled5.png">
+<meta property="og:image" content="http://yushusu.github.io/2022/07/08/CompilerNote/Untitled6.png">
+<meta property="og:image" content="http://yushusu.github.io/2022/07/08/CompilerNote/Untitled7.png">
+<meta property="og:image" content="http://yushusu.github.io/2022/07/08/CompilerNote/Untitled8.png">
+<meta property="og:image" content="http://yushusu.github.io/2022/07/08/CompilerNote/Untitled9.png">
+<meta property="og:image" content="http://yushusu.github.io/2022/07/08/CompilerNote/Untitled10.png">
+<meta property="og:image" content="http://yushusu.github.io/2022/07/08/CompilerNote/Untitled11.png">
+<meta property="og:image" content="http://yushusu.github.io/2022/07/08/CompilerNote/Untitled12.png">
+<meta property="og:image" content="http://yushusu.github.io/2022/07/08/CompilerNote/Untitled13.png">
+<meta property="og:image" content="http://yushusu.github.io/2022/07/08/CompilerNote/Untitled14.png">
+<meta property="og:image" content="http://yushusu.github.io/2022/07/08/CompilerNote/Untitled15.png">
+<meta property="og:image" content="http://yushusu.github.io/2022/07/08/CompilerNote/Untitled16.png">
+<meta property="og:image" content="http://yushusu.github.io/2022/07/08/CompilerNote/Untitled17.png">
+<meta property="og:image" content="http://yushusu.github.io/2022/07/08/CompilerNote/Untitled18.png">
+<meta property="og:image" content="http://yushusu.github.io/2022/07/08/CompilerNote/Untitled19.png">
+<meta property="og:image" content="http://yushusu.github.io/2022/07/08/CompilerNote/Untitled20.png">
+<meta property="article:published_time" content="2022-07-08T10:11:55.000Z">
+<meta property="article:modified_time" content="2023-07-09T02:39:18.783Z">
+<meta property="article:author" content="yushusu">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yushusu.github.io/2022/07/08/CompilerNote/Untitled.png">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>CompilerNote</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/about/">About</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="http://github.com/yushusu">Projects</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" aria-label="Previous post" href="/2023/06/29/Qiling-framwork-lab/"><i class="fa-solid fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" aria-label="Next post" href="/2022/07/08/UAFnote/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="Back to top" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="Share post" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://yushusu.github.io/2022/07/08/CompilerNote/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://yushusu.github.io/2022/07/08/CompilerNote/&text=CompilerNote"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://yushusu.github.io/2022/07/08/CompilerNote/&title=CompilerNote"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yushusu.github.io/2022/07/08/CompilerNote/&is_video=false&description=CompilerNote"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=CompilerNote&body=Check out this article: http://yushusu.github.io/2022/07/08/CompilerNote/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://yushusu.github.io/2022/07/08/CompilerNote/&title=CompilerNote"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://yushusu.github.io/2022/07/08/CompilerNote/&title=CompilerNote"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://yushusu.github.io/2022/07/08/CompilerNote/&title=CompilerNote"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://yushusu.github.io/2022/07/08/CompilerNote/&title=CompilerNote"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://yushusu.github.io/2022/07/08/CompilerNote/&name=CompilerNote&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://yushusu.github.io/2022/07/08/CompilerNote/&t=CompilerNote"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    
+    
+      <div id="toc">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E7%AB%AF"><span class="toc-number">1.</span> <span class="toc-text">前端</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%90%8E%E7%AB%AF"><span class="toc-number">2.</span> <span class="toc-text">后端</span></a></li></ol>
+      </div>
+    
+  </span>
+</div>
+
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        CompilerNote
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">yushusu</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2022-07-08T10:11:55.000Z" class="dt-published" itemprop="datePublished">2022-07-08</time>
+        
+      
+    </div>
+
+
+      
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <img src="/2022/07/08/CompilerNote/Untitled.png" class title="Untitled">
+
+<h1 id="前端"><a href="#前端" class="headerlink" title="前端"></a>前端</h1><ul>
+<li><p>编写词法分析器</p>
+<p>  Lex（或其 GNU 版本，Flex）：词法分析器的生成工具，基于一些规则来工作的，这些规则用“正则文法”表达，符合正则文法的表达式称为“正则表达式”。生成工具可以读入正则表达式，生成一种叫“有限自动机”的算法，来完成具体的词法分析工作。</p>
+<p>  有限自动机 ：例如，词法分析程序在扫描 age 的时候，处于“标识符”状态，等它遇到一个 &gt; 符号，就切换到“比较操作符”的状态。词法分析过程，就是这样一个个状态迁移的过程。</p>
+  <img src="/2022/07/08/CompilerNote/Untitled1.png" class title="Untitled">
+<p>  词法分析 Token : </p>
+<ul>
+<li>关键字：表示数据类型的 int、char，表示程序结构的 while、if，表述特殊数据取值的 null、NAN</li>
+<li>标识符 Identifier ：main、printf、age</li>
+<li>操作符号：+、-、&#x3D;、{、（、</li>
+<li>字面量 IntLiteral ：数字、字符串</li>
+<li>保留字</li>
+</ul>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//4个Token正则</span></span><br><span class="line">Id :        [a-zA-Z_] ([a-zA-Z_] | [<span class="number">0</span><span class="number">-9</span>])*</span><br><span class="line">IntLiteral: [<span class="number">0</span><span class="number">-9</span>]+</span><br><span class="line">GT :        <span class="string">&#x27;&gt;&#x27;</span></span><br><span class="line">GE :        <span class="string">&#x27;&gt;=&#x27;</span></span><br></pre></td></tr></table></figure>
+  <img src="/2022/07/08/CompilerNote/Untitled2.png" class title="Untitled">
+<p>  <strong>1. 初始状态：</strong>刚开始启动词法分析的时候，程序所处的状态。</p>
+<p>  <strong>2. 标识符状态：</strong>在初始状态时，当第一个字符是字母的时候，迁移到状态 2。当后续字符是字母和数字时，保留在状态 2。如果不是，就离开状态 2，写下该 Token，回到初始状态。</p>
+<p>  <strong>3. 大于操作符（GT）：</strong>在初始状态时，当第一个字符是 &gt; 时，进入这个状态。它是比较操作符的一种情况。</p>
+<p>  <strong>4. 大于等于操作符（GE）：</strong>如果状态 3 的下一个字符是 &#x3D;，就进入状态 4，变成 &gt;&#x3D;。它也是比较操作符的一种情况。</p>
+<p>  <strong>5. 数字字面量：</strong>在初始状态时，下一个字符是数字，进入这个状态。如果后续仍是数字，就保持在状态 5。</p>
+<p>  圆圈双线的意思是这个状态已经是一个合法的 Token 了，单线的意思是这个状态还是临时状态。</p>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line">DfaState newState = DfaState.Initial;</span><br><span class="line"><span class="keyword">if</span>(isAlpha(ch))&#123;                  <span class="comment">// 第一个字符是字母    </span></span><br><span class="line">	<span class="keyword">if</span> (ch == <span class="string">&#x27;i&#x27;</span>) &#123;</span><br><span class="line">        newState = DfaState.Id_int1;  <span class="comment">// 对字符 i 特殊处理</span></span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        newState = DfaState.Id;</span><br><span class="line">    &#125;                                     <span class="comment">//接下来要进入的状态，枚举（enum）类型</span></span><br><span class="line">	token.type = TokenType.Identifier;<span class="comment">//Token 的类型，是枚举类型的值</span></span><br><span class="line">	tokenText.append(ch); <span class="comment">//Token 的文本值</span></span><br><span class="line">&#125;<span class="keyword">else</span> <span class="keyword">if</span>(isDigit(ch))&#123;           <span class="comment">// 第一个字符是数字</span></span><br><span class="line">		newState = DfaState.IntLiteral;</span><br><span class="line">    token.type = TokenType.IntLiteral;</span><br><span class="line">    tokenText.append(ch);</span><br><span class="line">&#125;<span class="keyword">else</span> <span class="keyword">if</span> (ch == <span class="string">&#x27;&gt;&#x27;</span>) &#123;         <span class="comment">// 第一个字符是 &gt;</span></span><br><span class="line">    newState = DfaState.GT;</span><br><span class="line">    token.type = TokenType.GT;</span><br><span class="line">    tokenText.append(ch);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//进入235之后的状态迁移</span></span><br><span class="line"><span class="keyword">case</span> Initial:</span><br><span class="line">    state = initToken(ch);          <span class="comment">// 重新确定后续状态</span></span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line"><span class="keyword">case</span> Id:</span><br><span class="line">    <span class="keyword">if</span> (isAlpha(ch) || isDigit(ch)) &#123;</span><br><span class="line">        tokenText.append(ch);       <span class="comment">// 保持标识符状态</span></span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        state = initToken(ch); <span class="comment">// 退出标识符状态，并保存 Token</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line"><span class="keyword">case</span> GT:</span><br><span class="line">    <span class="keyword">if</span> (ch == <span class="string">&#x27;=&#x27;</span>) &#123;</span><br><span class="line">        token.type = TokenType.GE;  <span class="comment">// 转换成 GE</span></span><br><span class="line">        state = DfaState.GE;</span><br><span class="line">        tokenText.append(ch);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        state = initToken(ch);      <span class="comment">// 退出 GT 状态，并保存 Token</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line"><span class="keyword">case</span> GE:</span><br><span class="line">    state = initToken(ch);        <span class="comment">// 退出当前状态，并保存 Token</span></span><br><span class="line">    <span class="keyword">break</span>;</span><br><span class="line"><span class="keyword">case</span> IntLiteral:</span><br><span class="line">    <span class="keyword">if</span> (isDigit(ch)) &#123;</span><br><span class="line">        tokenText.append(ch);    <span class="comment">// 继续保持在数字字面量状态</span></span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        state = initToken(ch);    <span class="comment">// 退出当前状态，并保存 Token</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">break</span>;</span><br></pre></td></tr></table></figure>
+<p>  上面代码有很多冲突：</p>
+<p>  <strong>如何把关键字和保留字跟标识符区分开呢？</strong>以“int age &#x3D; 40”为例，我们把有限自动机修改成下面的样子，借此解决关键字和标识符的冲突。</p>
+  <img src="/2022/07/08/CompilerNote/Untitled3.png" class title="Untitled">
+<ul>
+<li><p>使用Antlr编写词法分析器</p>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">lexer grammar Hello;  <span class="comment">//lexer 关键字意味着这是一个词法规则文件，名称是 Hello，要与文件名相同</span></span><br><span class="line"> </span><br><span class="line"><span class="comment">// 关键字</span></span><br><span class="line">If :               <span class="string">&#x27;if&#x27;</span>;</span><br><span class="line">Int :              <span class="string">&#x27;int&#x27;</span>;</span><br><span class="line"> </span><br><span class="line"><span class="comment">// 字面量</span></span><br><span class="line">IntLiteral:        [<span class="number">0</span><span class="number">-9</span>]+;</span><br><span class="line">StringLiteral:      <span class="string">&#x27;&quot;&#x27;</span> .*? <span class="string">&#x27;&quot;&#x27;</span> ;  <span class="comment">// 字符串字面量</span></span><br><span class="line"> </span><br><span class="line"><span class="comment">// 操作符</span></span><br><span class="line">AssignmentOP:       <span class="string">&#x27;=&#x27;</span> ;    <span class="comment">//赋值</span></span><br><span class="line">RelationalOP:       <span class="string">&#x27;&gt;&#x27;</span>|<span class="string">&#x27;&gt;=&#x27;</span>|<span class="string">&#x27;&lt;&#x27;</span> |<span class="string">&#x27;&lt;=&#x27;</span> ;    <span class="comment">//关系式</span></span><br><span class="line">Star:               <span class="string">&#x27;*&#x27;</span>;</span><br><span class="line">Plus:               <span class="string">&#x27;+&#x27;</span>;</span><br><span class="line">Sharp:              <span class="string">&#x27;#&#x27;</span>;</span><br><span class="line">SemiColon:          <span class="string">&#x27;;&#x27;</span>;</span><br><span class="line">Dot:                <span class="string">&#x27;.&#x27;</span>;</span><br><span class="line">Comm:               <span class="string">&#x27;,&#x27;</span>;</span><br><span class="line">LeftBracket :       <span class="string">&#x27;[&#x27;</span>;</span><br><span class="line">RightBracket:       <span class="string">&#x27;]&#x27;</span>;</span><br><span class="line">LeftBrace:          <span class="string">&#x27;&#123;&#x27;</span>;</span><br><span class="line">RightBrace:         <span class="string">&#x27;&#125;&#x27;</span>;</span><br><span class="line">LeftParen:          <span class="string">&#x27;(&#x27;</span>;</span><br><span class="line">RightParen:         <span class="string">&#x27;)&#x27;</span>;</span><br><span class="line"> </span><br><span class="line"><span class="comment">// 标识符</span></span><br><span class="line">Id :                [a-zA-Z_] ([a-zA-Z_] | [<span class="number">0</span><span class="number">-9</span>])*;</span><br><span class="line"> </span><br><span class="line"><span class="comment">// 空白字符，抛弃</span></span><br><span class="line">Whitespace:         [ \t]+ -&gt; skip;</span><br><span class="line">Newline:            ( <span class="string">&#x27;\r&#x27;</span> <span class="string">&#x27;\n&#x27;</span>?|<span class="string">&#x27;\n&#x27;</span>)-&gt; skip;</span><br></pre></td></tr></table></figure>
+<p>  EscapeSequence 转义序列</p>
+<p>  fragment : 指的是一个语法片段</p>
+</li>
+<li><p>正则文法生成词法分析器</p>
+<p>  我提到有限自动机（FSA）有有限个状态。识别 Token 的过程，就是 FSA 状态迁移的过程。其中，FSA 分为<strong>确定的有限自动机（DFA）和非确定的有限自动机（NFA）。所有的正则表达式都能转换成 NFA 或 DFA，所有的 NFA 或 DFA，也都能转换成正则表达式。</strong></p>
+<ul>
+<li><p>DFA（Deterministic Finite Automaton）</p>
+  <img src="/2022/07/08/CompilerNote/Untitled4.png" class title="Untitled">
+<p>  <strong>DFA</strong> 的特点是<strong>，</strong>在任何一个状态，我们基于输入的字符串，都能做一个确定的转换。</p>
+</li>
+<li><p>NFA（Nondeterministic Finite Automaton）</p>
+<p>  <strong>NFA</strong> 的特点是<strong>，</strong>它存在某些状态，针对某些输入，不能做一个确定的转换，这又细分成两种情况：</p>
+<ul>
+<li>对于一个输入，它有两个状态可以转换。</li>
+<li>存在ε转换。也就是没有任何输入的情况下，也可以从一个状态迁移到另一个状态。</li>
+</ul>
+<p>  比如，“a[a-zA-Z0-9]*bc”这个正则表达式对字符串的要求是以 a 开头，以 bc 结尾，a 和 bc 之间可以有任意多个字母或数字。在图中状态 1 的节点输入 b 时，这个状态是有两条路径可以选择的，所以这个有限自动机是一个 NFA。</p>
+  <img src="/2022/07/08/CompilerNote/Untitled5.png" class title="Untitled">
+</li>
+<li><p>正则表达式生成 NFA转换到DFA</p>
+<p>  把正则表达式解析成一个内部的数据结构</p>
+  <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//用来测试的正则表达式可以是 int 关键字、标识符，或者数字字面量</span></span><br><span class="line"><span class="type">int</span> | [a-zA-Z][a-zA-Z0-<span class="number">9</span>]* | [<span class="number">0</span>-<span class="number">9</span>]*</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> GrammerNode <span class="title function_">sampleGrammer1</span><span class="params">()</span>&#123;</span><br><span class="line">		<span class="type">GrammarNode</span> <span class="variable">node</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">GrammerNode</span>(<span class="string">&#x27;regex1&#x27;</span> , GrammarNodeType.Or);</span><br><span class="line">		<span class="comment">//int 关键字</span></span><br><span class="line">		<span class="type">GrammarNode</span> <span class="variable">intNode</span> <span class="operator">=</span> node.createChild(GrammarNodeType.And);</span><br><span class="line">		intNode.createChild(<span class="keyword">new</span> <span class="title class_">CharSet</span>(<span class="string">&#x27;i&#x27;</span>));</span><br><span class="line">		intNode.createChild(<span class="keyword">new</span> <span class="title class_">CharSet</span>(<span class="string">&#x27;n&#x27;</span>));</span><br><span class="line">		intNode.createChild(<span class="keyword">new</span> <span class="title class_">CharSet</span>(<span class="string">&#x27;t&#x27;</span>));</span><br><span class="line">		<span class="comment">//标识符</span></span><br><span class="line">		<span class="type">GrammarNode</span> <span class="variable">idNode</span> <span class="operator">=</span> node.createChild(GrammarNodeType.And);</span><br><span class="line">    <span class="type">GrammarNode</span> <span class="variable">firstLetter</span> <span class="operator">=</span> idNode.createChild(CharSet.letter);</span><br><span class="line">    <span class="type">GrammarNode</span> <span class="variable">letterOrDigit</span> <span class="operator">=</span> idNode.createChild(CharSet.letterOrDigit);</span><br><span class="line">    letterOrDigit.setRepeatTimes(<span class="number">0</span>, -<span class="number">1</span>);</span><br><span class="line">    <span class="comment">// 数字字面量</span></span><br><span class="line">    <span class="type">GrammarNode</span> <span class="variable">literalNode</span> <span class="operator">=</span> node.createChild(CharSet.digit);</span><br><span class="line">    literalNode.setRepeatTimes(<span class="number">1</span>, -<span class="number">1</span>);</span><br><span class="line">    <span class="keyword">return</span> node;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+  <img src="/2022/07/08/CompilerNote/Untitled6.png" class title="Untitled">
+  <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//“0 ε -&gt; 2”的意思是从状态 0 通过ε转换，到达状态 2 </span></span><br><span class="line">NFA states:</span><br><span class="line"><span class="number">0</span>	ε -&gt; <span class="number">2</span>         <span class="comment">//三个子表达式，三者选一</span></span><br><span class="line">	ε -&gt; <span class="number">8</span></span><br><span class="line">	ε -&gt; <span class="number">14</span></span><br><span class="line"><span class="number">2</span>	i -&gt; <span class="number">3</span></span><br><span class="line"><span class="number">3</span>	n -&gt; <span class="number">5</span></span><br><span class="line"><span class="number">5</span>	t -&gt; <span class="number">7</span></span><br><span class="line"><span class="number">7</span>	ε -&gt; <span class="number">1</span></span><br><span class="line"><span class="number">1</span>	(end)</span><br><span class="line">	acceptable</span><br><span class="line"><span class="number">8</span>	[a-z]|[A-Z] -&gt; <span class="number">9</span></span><br><span class="line"><span class="number">9</span>	ε -&gt; <span class="number">10</span>                       <span class="comment">//9到13这块是s*，0 到多次,对s匹配零次,也可以在s的起止节点上循环多次</span></span><br><span class="line">	ε -&gt; <span class="number">13</span></span><br><span class="line"><span class="number">10</span>	[<span class="number">0</span>-<span class="number">9</span>]|[a-z]|[A-Z] -&gt; <span class="number">11</span></span><br><span class="line"><span class="number">11</span>	ε -&gt; <span class="number">10</span></span><br><span class="line">	ε -&gt; <span class="number">13</span></span><br><span class="line"><span class="number">13</span>	ε -&gt; <span class="number">1</span></span><br><span class="line"><span class="number">14</span>	[<span class="number">0</span>-<span class="number">9</span>] -&gt; <span class="number">15</span>                  <span class="comment">//14到15是s+,1到多次,没有办法跳过s,s至少经过一次。</span></span><br><span class="line"><span class="number">15</span>	ε -&gt; <span class="number">14</span></span><br><span class="line">	ε -&gt; <span class="number">1</span></span><br></pre></td></tr></table></figure>
+<p>  图中分为上中下三条路径分别是解析 int 关键字、标识符和数字字面量的过程：</p>
+  <img src="/2022/07/08/CompilerNote/Untitled7.png" class title="Untitled">
+<p>  以上图为例，当我们解析 intA 这个字符串时，首先选择最上面的路径去匹配，匹配完 int 这三个字符以后，来到状态 7，若后面没有其他字符，就可以到达接受状态 1，返回匹配成功的信息。可实际上，int 后面是有 A 的，所以第一条路径匹配失败。</p>
+<p>  失败之后不能直接返回“匹配失败”的结果，因为还有其他路径，所以我们要回溯到状态 0，去尝试第二条路径，在第二条路径中，尝试成功了。</p>
+  <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//基于 NFA 处理字符串</span></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 用 NFA 来匹配字符串</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> state 当前所在的状态</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> chars 要匹配的字符串，用数组表示</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> index1 当前匹配字符开始的位置。</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@return</span> 匹配后，新 index 的位置。指向匹配成功的字符的下一个字符。</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="type">int</span> <span class="title function_">matchWithNFA</span><span class="params">(State state,<span class="type">char</span>[] chars,<span class="type">int</span> index1)</span>&#123;</span><br><span class="line">		System.out.println(<span class="string">&quot;trying state :&quot;</span> +state.name + <span class="string">&quot;,index = &quot;</span> + index1);</span><br><span class="line">		<span class="type">int</span> <span class="variable">index2</span> <span class="operator">=</span> index1;</span><br><span class="line">		<span class="keyword">for</span>(Transition transition : state.transitions())&#123;</span><br><span class="line">				<span class="type">State</span> <span class="variable">nextState</span> <span class="operator">=</span> state.getState(transition);</span><br><span class="line">				<span class="comment">//epsilon转换 ε</span></span><br><span class="line">				<span class="keyword">if</span>(transition.isEpsilon())&#123;</span><br><span class="line">						index2 = matchWithNFA(nextState , chars , index1);</span><br><span class="line">						<span class="keyword">if</span>(index2 == chars.length)</span><br><span class="line">									<span class="keyword">break</span>;</span><br><span class="line">				&#125;</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="comment">//消耗掉一个字符指针前移</span></span><br><span class="line">			<span class="keyword">else</span> <span class="keyword">if</span>(transition.match(chars[index1]))&#123;</span><br><span class="line">					index2 ++; <span class="comment">// 消耗掉一个字符</span></span><br><span class="line">					<span class="keyword">if</span>(index2 &lt; chars.length)&#123;</span><br><span class="line">							index2 = matchWithNFA(nextState , chars ,index1 + <span class="number">1</span>)</span><br><span class="line">					&#125;</span><br><span class="line">						<span class="comment">// 如果已经扫描完所有字符</span></span><br><span class="line">            <span class="comment">// 检查当前状态是否是接受状态，或者可以通过 epsilon 到达接受状态</span></span><br><span class="line">            <span class="comment">// 如果状态机还没有到达接受状态，本次匹配失败</span></span><br><span class="line">            <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">if</span> (acceptable(nextState)) &#123;</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">else</span>&#123;</span><br><span class="line">                    index2 = -<span class="number">1</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">			&#125;</span><br><span class="line">		<span class="keyword">return</span> index2;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//output 回溯过程</span></span><br><span class="line">NFA matching: <span class="string">&#x27;intA&#x27;</span></span><br><span class="line">trying state : <span class="number">0</span>, index =<span class="number">0</span></span><br><span class="line">trying state : <span class="number">2</span>, index =<span class="number">0</span>    <span class="comment">// 先走第一条路径，即 int 关键字这个路径</span></span><br><span class="line">trying state : <span class="number">3</span>, index =<span class="number">1</span></span><br><span class="line">trying state : <span class="number">5</span>, index =<span class="number">2</span></span><br><span class="line">trying state : <span class="number">7</span>, index =<span class="number">3</span></span><br><span class="line">trying state : <span class="number">1</span>, index =<span class="number">3</span>    <span class="comment">// 到了末尾了，发现还有字符&#x27;A&#x27;没有匹配上</span></span><br><span class="line">trying state : <span class="number">8</span>, index =<span class="number">0</span>    <span class="comment">// 回溯，尝试第二条路径，即标识符</span></span><br><span class="line">trying state : <span class="number">9</span>, index =<span class="number">1</span></span><br><span class="line">trying state : <span class="number">10</span>, index =<span class="number">1</span>   <span class="comment">// 在 10 和 11 这里循环多次</span></span><br><span class="line">trying state : <span class="number">11</span>, index =<span class="number">2</span></span><br><span class="line">trying state : <span class="number">10</span>, index =<span class="number">2</span></span><br><span class="line">trying state : <span class="number">11</span>, index =<span class="number">3</span></span><br><span class="line">trying state : <span class="number">10</span>, index =<span class="number">3</span></span><br><span class="line"><span class="literal">true</span></span><br></pre></td></tr></table></figure>
+<p>  NFA的特点是非常多试探回溯，把NFA转换成DFA叫<strong>子集构造法</strong></p>
+<p>  1.ε-closure(s)，即集合 s 的ε闭包。也就是从集合 s 中的每个节点，加上从这个节点出发通过ε转换所能到达的所有状态。</p>
+<p>  2.move(s, ‘i’)，即从集合 s 接收一个字符 i，所能到达的新状态的集合。</p>
+<p>  所以，s1 &#x3D; ε-closure(move(s0,‘i’))</p>
+  <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//子集构造法</span></span><br><span class="line">计算 s0，即状态 <span class="number">0</span> 的ε闭包</span><br><span class="line">把 s0 压入待处理栈</span><br><span class="line">把 s0 加入所有状态集的集合 S</span><br><span class="line">循环：待处理栈内还有未处理的状态集</span><br><span class="line">   循环：针对字母表中的每个字符 c</span><br><span class="line">      循环：针对栈里的每个状态集合 s(i)（未处理的状态集）</span><br><span class="line">          计算 s(m) = move(s(i), c)（就是从 s(i) 出发，接收字符 c 能够</span><br><span class="line">                                   迁移到的新状态的集合）</span><br><span class="line">          计算 s(m) 的ε闭包，叫做 s(j)</span><br><span class="line">          看看 s(j) 是不是个新的状态集，如果已经有这个状态集了，把它找出来</span><br><span class="line">                  否则，把 s(j) 加入全集 S 和待处理栈</span><br><span class="line">          建立 s(i) 到 s(j) 的连线，转换条件是 c</span><br></pre></td></tr></table></figure>
+  <img src="/2022/07/08/CompilerNote/Untitled8.png" class title="Untitled">
+<p>  从初始状态开始，如果输入是 i，那就走 int 识别这条线，也就是按照 19、21、22 这条线依次迁移，如果中间发现不符合 int 模式，就跳转到 20，也就是标识符状态。</p>
+<p>  注意，在上面的 DFA 中，只要包含接受状态 1 的，都是 DFA 的接受状态。进一步区分的话，22 是 int 关键字的接受状态，因为它包含了 int 关键字原来的接受状态 7。同理，17 是数字字面量的接受状态，18、19、20、21 都是标识符的接受状态。</p>
+<p>  NFA 和 DFA 有各自的优缺点：NFA 通常状态数量比较少，可以直接用来进行计算，但可能会涉及回溯，从而性能低下；DFA 的状态数量可能很大，占用更多的空间，并且生成 DFA 本身也需要消耗计算资源。所以，我们根据实际需求选择采用 NFA 还是 DFA 就可以了。</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>编写语法分析器</p>
+<p>   <a target="_blank" rel="noopener" href="https://resources.jointjs.com/demos/javascript-ast">语法树自动在线生成</a></p>
+<p>  Yacc词法分析是识别一个个的单词，而语法分析就是在词法分析的基础上识别出程序的树状结构语法结构。一个程序就是一棵树，这棵树叫做<strong>抽象语法树</strong><br>  （Abstract Syntax Tree，AST）。树的每个节点（子树）是一个语法单元，这个单元的构成规则就叫“语法”。每个节点还可以有下级节点。可以用递归下降的算法来实现。</p>
+  <img src="/2022/07/08/CompilerNote/Untitled9.png" class title="Untitled">
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment">//使用clang查看具体AST clang -cc1 -ast-dump hello.c</span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span>* argv[])</span>&#123;</span><br><span class="line">    <span class="type">int</span> age = <span class="number">45</span>;</span><br><span class="line">    <span class="keyword">if</span> (age &gt;= <span class="number">17</span>+<span class="number">8</span>+<span class="number">20</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Hello old man!\\n&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span>&#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Hello young man!\\n&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+  <img src="/2022/07/08/CompilerNote/Untitled10.png" class title="Untitled">
+<p>  变量声明语句 int age &#x3D; 45 ; 它的左边是一个<code>非终结符（Non-terminal）</code>。右边是它的<code>产生式（Production Rule）</code>。在语法解析的过程中，左边会被右边替代。如果替代之后还有<code>非终结符</code>，那么继续这个替代过程，直到最后全部都是<code>终结符（Terminal）</code>，也就是 Token。只有终结符才可以成为 AST 的<code>叶子节点</code>。这个过程，也叫做推导（Derivation）过程：</p>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">intDeclaration : Int <span class="title function_">Identifier</span> <span class="params">(<span class="string">&#x27;=&#x27;</span> additiveExpression)</span>?;</span><br><span class="line"><span class="comment">//int 类型变量的声明，</span></span><br><span class="line"><span class="comment">//需要有一个 Int 型的 Token，加一个变量标识符，后面跟一个可选的赋值表达式</span></span><br></pre></td></tr></table></figure>
+<p>  我们把上面的文法翻译成程序语句，伪代码如下：</p>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">MatchIntClare()&#123;</span><br><span class="line">	MatchToken(Int)；        <span class="comment">// 匹配 Int 关键字</span></span><br><span class="line">  MatchIdentifier();       <span class="comment">// 匹配标识符</span></span><br><span class="line">  MatchToken(equal);       <span class="comment">// 匹配等号</span></span><br><span class="line">  MatchExpression();       <span class="comment">// 匹配表达式</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>  具体实现：</p>
+<blockquote>
+<p>解析变量声明语句时，我先看第一个 Token 是不是 int。如果是，就创建一个 AST 节点，记下 int 后面的变量名称，然后再看后面是不是跟了初始化部分，也就是等号加一个表达式。我们检查一下有没有等号，有的话，接着再匹配一个表达式。</p>
+</blockquote>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">SimpleASTNode node = null;</span><br><span class="line">Token token = tokens.peek(); <span class="comment">//预读(读取下一个token,预先看一下下一个 Token 是否是等号</span></span><br><span class="line"><span class="keyword">if</span>(token !=null &amp;&amp; token.getType() == TokenType.Int)&#123; <span class="comment">//匹配 Int 关键字</span></span><br><span class="line">	token = tokens.read();    <span class="comment">//消耗掉Int,会从 Token 流中移除，下一个 Token 变成了当前的 Token</span></span><br><span class="line"><span class="keyword">if</span>(tokens.peek().getType() == TokenType.Identifier)&#123;  <span class="comment">// 匹配标识符</span></span><br><span class="line">		token = tokens.read();   <span class="comment">// 消耗掉标识符</span></span><br><span class="line">		<span class="comment">// 创建当前节点，并把变量名记到 AST 节点的文本值中，</span></span><br><span class="line">		<span class="comment">// 这里新建一个变量子节点也是可以的</span></span><br><span class="line">		node = new SimpleASTNode(ASTNodeType.IntDeclaration , token.getText());</span><br><span class="line">		token = tokens.peek(); <span class="comment">//预读</span></span><br><span class="line">		<span class="keyword">if</span> (token != null &amp;&amp; token.getType() == TokenType.Assignment) &#123;</span><br><span class="line">            tokens.read();      <span class="comment">// 消耗掉等号</span></span><br><span class="line">            SimpleASTNode child = additive(tokens);  <span class="comment">// 匹配一个表达式</span></span><br><span class="line">            <span class="keyword">if</span> (child == null) &#123;</span><br><span class="line">                throw new Exception(<span class="string">&quot;invalide variable initialization, expecting an expression&quot;</span>);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">else</span>&#123;</span><br><span class="line">                node.addChild(child);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        throw new Exception(<span class="string">&quot;variable name expected&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>  我们把解析变量声明语句和表达式的算法分别写成函数。在语法分析的时候，调用这些函数跟后面的 Token 串做模式匹配。匹配上了，就返回一个 AST 节点，否则就返回 null。如果中间发现跟语法规则不符，就报编译错误。</p>
+<p>  在这个过程中，上级文法嵌套下级文法，上级的算法调用下级的算法。表现在生成 AST 中，上级算法生成上级节点，下级算法生成下级节点。<strong>这就是“下降”的含义。程序结构基本上是跟文法规则同构的。这就是递归下降算法的优点，非常直观。</strong>自顶向下算法能减少回溯的次数</p>
+<p>  正则文法是上下文无关文法的一个子集,上下文无关文法允许递归调用，而正则文法不允许。上下文无关的意思是，无论在任何情况下，文法的推导规则都是一样的。比如，在变量声明语句中可能要用到一个算术表达式来做变量初始化，而在其他地方可能也会用到算术表达式。不管在什么地方，算术表达式的语法都一样，都允许用加法和乘法，计算优先级也不变。</p>
+<p>  例如 ： 2 + 3 * 5”的 AST</p>
+  <img src="/2022/07/08/CompilerNote/Untitled11.png" class title="Untitled">
+<ul>
+<li><p>关于BNF</p>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//BNF</span></span><br><span class="line">additiveExpression</span><br><span class="line">    :   multiplicativeExpression</span><br><span class="line">    |   multiplicativeExpression Plus additiveExpression</span><br><span class="line">    ;</span><br><span class="line"></span><br><span class="line">这个实际上就是语法规则，是用BNF表达的。以addtive为例，它有两个产生式。</span><br><span class="line">产生式<span class="number">1</span>：一个乘法表达式</span><br><span class="line">产生式<span class="number">2</span>：一个加法表达式 + 乘法表达式。</span><br><span class="line">通过上面两个产生式的组合，特别是产生式<span class="number">2</span>的递归调用，就能推导出所有的加减乘数算术表达式。</span><br><span class="line">比如，对于<span class="number">2</span>*<span class="number">3</span>这个表达式，运用的是产生式<span class="number">1</span>。</span><br><span class="line">对于<span class="number">2</span>+<span class="number">3</span>*<span class="number">5</span>，运用的是产生式<span class="number">2</span>。</span><br></pre></td></tr></table></figure>
+<p>  算法可以首先尝试产生式1。推导顺序是这样的：</p>
+<p>  additive -&gt; multiplicative(加法的产生式1)</p>
+<p>  -&gt; Intliteral（2）（乘法的产生式1）</p>
+<p>  这时候只消化了一个Token。我们是要用一个表达式把这5个Token都消化掉才行。所以会继续尝试乘法的产生式2。</p>
+<p>  additive -&gt; multiplicative(加法的产生式1)</p>
+<p>  -&gt; Intliteral * multiplicative （乘法的产生式2）</p>
+<p>  这次尝试不成功，因为我们下一个Token是加号，不是乘号。</p>
+<p>  现在，退回来尝试加法的产生式2。</p>
+<p>  additive -&gt; multiplicative + additive(加法的产生式2)</p>
+<p>  -&gt; Intliteral(2) + additive</p>
+<p>  -&gt;Intliteral(2) + multiplicative</p>
+<p>  -&gt; Intliteral(2) + Intliteral(3) 不行，因为还有Token</p>
+<p>  -&gt; Intliteral(2) + Intliteral(3) * multiplicative 又用上乘法的产生式2了</p>
+<p>  -&gt;Intliteral(2) + Intliteral(3) * Intliteral(5)</p>
+<p>  这是严格的推导过程。我在示例代码的实现中，因为提取了左公因子，所以没用多次回溯。</p>
+</li>
+<li><p>为什么出现左递归Left Recursive(左推导LeftMost)无限调用</p>
+<p>  为了方便讨论，我们把规则简化一下，去掉乘法那一层。否则在乘法那就已经无限递归下去了。例如2+3，修改后为：</p>
+<p>  additive -&gt; IntLiteral | additive Intliteral ;</p>
+<p>  我们假设是最左推导，也就是总是先展开左边的非中介符。</p>
+<p>  第一遍：additive-&gt;IntLiteral，但因为后面还有Token没处理完，所以这个推导过程会失败，要退回来。这可能是你没理解的地方。我们是要用additive匹配整个Token串，而不仅仅是第一个Token。</p>
+<p>  第二遍：用第二个产生式，additive-&gt;additive-&gt;IntLiteral，还是一样失败。</p>
+<p>  第三遍：additive-&gt;additive-&gt;additive-&gt;IntLiteral。</p>
+<p>  第四遍：….</p>
+<p>  结论：</p>
+<p>  在二元表达式的语法规则中，如果产生式的第一个元素是它自身，那么程序就会无限地递归下去，这种情况就叫做<strong>左递归。</strong>比如加法表达式的产生式“加法表达式 + 乘法表达式”，就是左递归的。</p>
+</li>
+<li><p>文法和语法的区别</p>
+<p>  文法，英文叫做Grammar，是形式语言（Formal Language）的一个术语。所以也有Formal Grammar这样的说法。这里的文法有定义清晰的规则。比如，我们的词法规则、语法规则和属性规则，使用形式文法来定义的。我们的课程里讲解了<strong>正则文法</strong>(Regular Grammar)、<strong>上下文无关文法</strong>(Context-free Grammar)等不同的文法规则，<strong>用来描述词法和语法</strong>。</p>
+<p>  语法分析中的这个语法，英文是Syntax，主要是<strong>描述词是怎么组成句子的</strong>。一个语言的语法规则，通常指的是这个Syntax。</p>
+<p>  问题是，Grammar这个词，在中文很多应用场景中也叫做语法。这是会引起混淆的地方。我们在使用的时候要小心一点就行了。比如，我做了一个规则文件，里面都是一些<strong>词法规则</strong>（Lexer Grammar），我会说，这是一个词法规则文件，或者词法文法文件。这个时候，把它说成是一个语法规则文件，就有点含义模糊。因为这里面并没有语法规则（Syntax Grammar）。</p>
+</li>
+<li><p>书写语法规则并推导</p>
+<p>  如果某个句子，能用某个文法推导出来，那就说这个句子符合某个文法。替换过程，就是推导过程。这样不断替换，就是不断推导。我们说语法解析，实际上是语法推导的反过程，是把它怎么推导的过程给逆向出来。</p>
+<p>  语法规则是由上下文无关文法表示的，而上下文无关文法是由一组替换规则（又叫产生式）组成的，比如算术表达式的文法规则可以表达成下面这种形式：</p>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">add -&gt; mul | add + mul   <span class="comment">//add 可以替换成 mul，或者 add + mul。</span></span><br><span class="line">												<span class="comment">//这样的替换过程又叫做“推导”</span></span><br><span class="line"></span><br><span class="line">mul -&gt; pri | mul * pri</span><br><span class="line">pri -&gt; Id | Num | (add)</span><br><span class="line"><span class="comment">//实际BNF写成下面这样</span></span><br><span class="line">add ::= mul | add + mul</span><br><span class="line">mul ::= pri | mul * pri</span><br><span class="line">pri ::= Id | Num | (add)</span><br><span class="line"></span><br><span class="line"><span class="comment">//下面EBNF这个规则中运用了 * 号，来表示这个部分可以重复 0 到多次：</span></span><br><span class="line">add -&gt; mul (+ mul)*</span><br></pre></td></tr></table></figure>
+<p>  以“2+3*5” 和 “2+3+4”这两个算术表达式为例，这两个算术表达式的推导过程分别如下图所示：</p>
+  <img src="/2022/07/08/CompilerNote/Untitled12.png" class title="Untitled">
+<p>  上图Num、+ 和 * 都是<code>终结符</code>，终结符都是词法分析中产生的<code>Token</code>。而那些非叶子节点，就是<code>非终结符</code>。文法的推导过程，就是把非终结符不断替换的过程，让最后的结果没有非终结符，只有终结符。</p>
+</li>
+<li><p>确保正确的优先级Priority</p>
+<ul>
+<li>优先级是通过在语法推导中的层次来决定的，优先级越低的，越先尝试推导。</li>
+</ul>
+<p>  应该把关系运算（&gt;、&#x3D;、&lt;）放在加法的上层，逻辑运算（and、or）放在关系运算的上层。的确如此，我们试着将它写出来：</p>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">exp</span> -&gt; or | or = <span class="built_in">exp</span></span><br><span class="line"><span class="comment">//or = exp 也就是一个or表达式，跟等号token，跟另一个表达式。</span></span><br><span class="line">or -&gt; and | or || and</span><br><span class="line">and -&gt; equal | and &amp;&amp; equal</span><br><span class="line">equal -&gt; rel | equal == rel | equal != rel</span><br><span class="line">rel -&gt; add | rel &gt; add | rel &lt; add | rel &gt;= add | rel &lt;= add</span><br><span class="line">add -&gt; mul | add + mul | add - mul </span><br><span class="line">mul -&gt; pri | mul * pri | mul / pri</span><br><span class="line"><span class="comment">//这里表达的优先级从低到高是：</span></span><br><span class="line"><span class="comment">//赋值运算、逻辑运算（or）、逻辑运算（and）、相等比较（equal）、大小比较（rel）、</span></span><br><span class="line"><span class="comment">//加法运算（add）、乘法运算（mul）和基础表达式（pri）。</span></span><br><span class="line"></span><br><span class="line">pri -&gt; Id | Literal | (<span class="built_in">exp</span>)</span><br><span class="line"><span class="comment">//基础表达式用括号把表达式包裹起来，递归地引用表达式就可以了。</span></span><br><span class="line"><span class="comment">//这样的话，只要在解析表达式的时候遇到括号，那么就知道这个是最优先的</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>确保正确的结合性Associativity</p>
+<ul>
+<li>结合性是跟左递归还是右递归有关的，左递归导致左结合，右递归导致右结合。</li>
+<li>左递归可以通过改写语法规则来避免，而改写后的语法又可以表达成简洁的 EBNF 格式，从而启发我们用循环代替右递归。</li>
+</ul>
+<p>  见的加减乘除等算术运算是左结合的，“.”符号也是左结合的。规律：<strong>对于左结合的运算符，递归项要放在左边；而右结合的运算符，递归项放在右边。</strong></p>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//所以加法表达式规则应该</span></span><br><span class="line">add -&gt; mul | add + mul</span><br><span class="line"><span class="comment">//还要消除左递归，现在我们改写成:</span></span><br><span class="line">add -&gt; mul add<span class="number">&#x27;</span></span><br><span class="line">add<span class="number">&#x27;</span> -&gt; + mul add<span class="number">&#x27;</span> | ε</span><br><span class="line"><span class="comment">//文法中，ε（读作 epsilon）是空集的意思</span></span><br></pre></td></tr></table></figure>
+<p>  接下来，我们用刚刚改写的规则再次推导一下 “2+3+4”这个表达式，得到了下图中左边的结果：</p>
+  <img src="/2022/07/08/CompilerNote/Untitled13.png" class title="Untitled">
+<p>  由于 add’的规则是右递归的，如果用标准的递归下降算法，我们会跟上一讲一样，又会出现运算符结合性的错误。我们期待的 AST 是右边的那棵，它的结合性才是正确的。那么有没有解决办法呢？答案是有的。我们仔细分析一下上面语法规则的推导过程。只有第一步是按照 add 规则推导，之后都是按照 add’规则推导，一直到结束。</p>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">add -&gt; mul (+ mul)*</span><br><span class="line"><span class="comment">//对于 (+ mul)* 这部分，我们其实可以写成一个循环，而不是一次次的递归调用,如下</span></span><br><span class="line">mul();</span><br><span class="line"><span class="keyword">while</span>(next token is +)&#123;</span><br><span class="line">  mul()</span><br><span class="line">  createAddNode</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>  有一个概念叫做<strong>尾递归，</strong>尾递归函数的最后一句是递归地调用自身。编译程序通常都会把尾递归转化为一个循环语句，使用的原理跟上面的伪代码是一样的。具体代码:</p>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">private SimpleASTNode <span class="title function_">additive</span><span class="params">(TokenReader tokens)</span>throws Exception&#123;</span><br><span class="line">	SimpleASTNode child1 = multiplicative(tokens); <span class="comment">// 应用 add 规则</span></span><br><span class="line">	SimpleASTNode node = child1 ; </span><br><span class="line">	<span class="keyword">if</span>(child1 != null)&#123;</span><br><span class="line">			<span class="keyword">while</span>(<span class="literal">true</span>)&#123; <span class="comment">// 循环应用 add&#x27;</span></span><br><span class="line">					Token token = tokens.peek();</span><br><span class="line">					<span class="keyword">if</span>(token != null &amp;&amp; (token.getType() == TokenType.Plus || token.getType() == TokenType.Minus))&#123;</span><br><span class="line">								token = tokens.read();              <span class="comment">// 读出加号</span></span><br><span class="line">                SimpleASTNode child2 = multiplicative(tokens);  <span class="comment">// 计算下级节点</span></span><br><span class="line">                node = new SimpleASTNode(ASTNodeType.Additive, token.getText());</span><br><span class="line">                node.addChild(child1);              <span class="comment">// 注意，新节点在顶层，保证正确的结合性</span></span><br><span class="line">                node.addChild(child2);</span><br><span class="line">                child1 = node;</span><br><span class="line">					&#125;<span class="keyword">else</span>&#123;</span><br><span class="line">								<span class="keyword">break</span>;</span><br><span class="line">					&#125;</span><br><span class="line">			&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> node;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>理解递归下降算法中的回溯</p>
+<p>  考虑一下 age &#x3D; 45；这个语句</p>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//对 statement 语句的定义：</span></span><br><span class="line">statement</span><br><span class="line">: intDeclaration 变量声明语句</span><br><span class="line">| expressionStatement 表达式语句</span><br><span class="line">| assignmentStatement  赋值语句</span><br><span class="line">;</span><br></pre></td></tr></table></figure>
+<p>  语句不是以 int 开头的，所以这个尝试会返回 null。然后我们接着尝试 expressionStatement：</p>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">private SimpleASTNode <span class="title function_">expressionStatement</span><span class="params">()</span> throws Exception &#123;</span><br><span class="line">        <span class="type">int</span> pos = tokens.getPosition();  <span class="comment">// 记下初始位置</span></span><br><span class="line">        SimpleASTNode node = additive(); <span class="comment">// 匹配加法规则</span></span><br><span class="line">        <span class="keyword">if</span> (node != null) &#123;</span><br><span class="line">            Token token = tokens.peek();</span><br><span class="line">            <span class="keyword">if</span> (token != null &amp;&amp; token.getType() == TokenType.SemiColon) &#123;   </span><br><span class="line">							<span class="comment">// 要求一定以分号结尾</span></span><br><span class="line">                tokens.read();</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                node = null;</span><br><span class="line">                tokens.setPosition(pos); <span class="comment">// 回溯</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> node;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
+<p>  语句最左边是一个标识符。根据我们的语法规则，标识符是一个合法的 addtiveExpresion，因此 additive() 函数返回一个非空值。接下来，后面应该扫描到一个分号才对，但是显然不是，标识符后面跟的是等号，这证明模式匹配失败。</p>
+<p>  <strong>尝试一个规则不成功之后，恢复到原样，再去尝试另外的规则，这个现象就叫做“回溯”。</strong></p>
+</li>
+<li><p>实现简单的输入、执行、打印的循环过程:REPL（Read-Eval-Print Loop）</p>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">SimpleParser parser = new SimpleParser();</span><br><span class="line">SimpleScript script = new SimpleScript();</span><br><span class="line">ByfferedReader reader = new BufferedReader(new InputStreamReader(System.in))</span><br><span class="line"><span class="comment">//从终端获取输入</span></span><br><span class="line">String scriptText = <span class="string">&quot;&quot;</span>;</span><br><span class="line">System.out.print(<span class="string">&quot;\n&gt;&quot;</span>);</span><br><span class="line"><span class="keyword">while</span>(True)&#123;</span><br><span class="line">		try &#123;</span><br><span class="line">        String line = reader.readLine().trim(); <span class="comment">// 读入一行</span></span><br><span class="line">        <span class="keyword">if</span> (line.equals(<span class="string">&quot;exit();&quot;</span>)) &#123;   <span class="comment">// 硬编码退出条件</span></span><br><span class="line">            System.out.println(<span class="string">&quot;good bye!&quot;</span>);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        scriptText += line + <span class="string">&quot;\n&quot;</span>;</span><br><span class="line">        <span class="keyword">if</span> (line.endsWith(<span class="string">&quot;;&quot;</span>)) &#123; <span class="comment">// 如果没有遇到分号的话，会再读一行</span></span><br><span class="line">            ASTNode tree = parser.parse(scriptText); <span class="comment">// 语法解析</span></span><br><span class="line">            <span class="keyword">if</span> (verbose) &#123;</span><br><span class="line">                parser.dumpAST(tree, <span class="string">&quot;&quot;</span>);</span><br><span class="line">            &#125;</span><br><span class="line">          </span><br><span class="line">            script.evaluate(tree, <span class="string">&quot;&quot;</span>); <span class="comment">// 对 AST 求值，并打印</span></span><br><span class="line"> </span><br><span class="line">            System.out.print(<span class="string">&quot;\n&gt;&quot;</span>);   <span class="comment">// 显示一个提示符</span></span><br><span class="line"></span><br><span class="line">            scriptText = <span class="string">&quot;&quot;</span>;</span><br><span class="line">        &#125;</span><br><span class="line"> </span><br><span class="line">    &#125; catch (Exception e) &#123; <span class="comment">// 如果发现语法错误，报错，然后可以继续执行</span></span><br><span class="line">        System.out.println(e.getLocalizedMessage());</span><br><span class="line">        System.out.print(<span class="string">&quot;\n&gt;&quot;</span>);   <span class="comment">// 提示符</span></span><br><span class="line">        scriptText = <span class="string">&quot;&quot;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>  调试一下</p>
+</li>
+<li><p>设计类的语法</p>
+  <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">classDeclaration</span><br><span class="line">    : CLASS IDENTIFIER  <span class="comment">//类声明以 class 关键字开头,有一个标识符是类型名称</span></span><br><span class="line">      (EXTENDS typeType)?</span><br><span class="line">      (IMPLEMENTS typeList)?</span><br><span class="line">      classBody <span class="comment">//后面跟着类的主体</span></span><br><span class="line">    ;</span><br><span class="line"> </span><br><span class="line">classBody</span><br><span class="line">    : <span class="string">&#x27;&#123;&#x27;</span> classBodyDeclaration* <span class="string">&#x27;&#125;&#x27;</span> <span class="comment">//类的主体里要声明类的成员</span></span><br><span class="line">    ;</span><br><span class="line"> </span><br><span class="line">classBodyDeclaration</span><br><span class="line">    : <span class="string">&#x27;;&#x27;</span></span><br><span class="line">    | memberDeclaration <span class="comment">//类的成员变量的声明和普通变量声明在语法上没什么区别。</span></span><br><span class="line">    ;</span><br><span class="line"> <span class="comment">//在简化的情况下，可以只关注类的属性和方法两种成员。</span></span><br><span class="line"><span class="comment">//把类的方法 function，而不是 method，是想把对象方法和函数做一些统一的设计。</span></span><br><span class="line">memberDeclaration</span><br><span class="line">    : functionDeclaration</span><br><span class="line">    | fieldDeclaration</span><br><span class="line">    ;</span><br><span class="line"> </span><br><span class="line">functionDeclaration <span class="comment">//函数声明现在的角色是类的方法</span></span><br><span class="line">    : typeTypeOrVoid IDENTIFIER <span class="title function_">formalParameters</span> <span class="params">(<span class="string">&#x27;[&#x27;</span> <span class="string">&#x27;]&#x27;</span>)</span>*</span><br><span class="line">      (THROWS qualifiedNameList)?</span><br><span class="line">      functionBody/</span><br><span class="line">    ;</span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li><p>编写语义分析器</p>
+<p>  两种解释都是可以的时候，我们只有联系上下文才能知道它的准确含义。消除语义模糊，生成一些属性信息，让计算机能够依据这些信息生成目标代码。例如：</p>
+<ul>
+<li><p>某个表达式的计算结果是什么数据类型？如果有<strong>数据类型不匹配的情况</strong>，是否要做自动转换？</p>
+</li>
+<li><p>如果在一个<strong>代码块的内部和外部有相同名称的变量</strong>，我在执行的时候到底用哪个？ 就像“我喜欢又聪明又勇敢的你”中的“你”，到底指的是谁，需要明确。</p>
+</li>
+<li><p>在同一个作用域内，不允许有两个名称相同的变量，这是<strong>唯一性检查</strong>。你不能刚声明一个变量 a，紧接着又声明同样名称的一个变量 a，这就不允许了。</p>
+</li>
+<li><p>生存期&amp;作用域</p>
+<p>  思考问题</p>
+<ul>
+<li><p>闭包的机理到底是什么？</p>
+<ul>
+<li>变量的使用范围由作用域决定，作用域由词法规则决定，词法分析生成作用域链，之后查找变量就沿着这条作用域链查找，与函数调用栈就没有关系了。一般函数的生存期就是出栈后就结束了，如果是引用对象会在本次GC中回收，如果产生了闭包，那就要<strong>等到引用闭包的变量销毁，生存期才结束</strong>。</li>
+</ul>
+</li>
+<li><p>为什么需要栈和堆两种机制来管理内存？它们的区别又是什么？</p>
+</li>
+<li><p>一个静态的内部类和普通的内部类有什么区别？</p>
+</li>
+<li><p>作用域 Scope、<strong><strong>实现作用域和栈</strong></strong></p>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"> </span><br><span class="line"><span class="type">int</span> a = <span class="number">1</span>;</span><br><span class="line"> </span><br><span class="line"><span class="type">void</span> <span class="title function_">fun</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    a = <span class="number">2</span>;<span class="comment">//全局a</span></span><br><span class="line">    <span class="comment">//b = 3;   // 出错，不知道 b 是谁</span></span><br><span class="line">    <span class="type">int</span> a = <span class="number">3</span>; <span class="comment">// 允许声明一个同名的变量吗？ 本地a</span></span><br><span class="line">    <span class="type">int</span> b = a; <span class="comment">// 这里的 a 是哪个？ 本地a</span></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;in fun: a=%d b=%d \n&quot;</span>, a, b);</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="type">int</span> b = <span class="number">4</span>; <span class="comment">//b 的作用域从这里开始</span></span><br><span class="line"> </span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> **argv)</span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;main--1: a=%d b=%d \n&quot;</span>, a, b);</span><br><span class="line"> </span><br><span class="line">    fun();</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;main--2: a=%d b=%d \n&quot;</span>, a, b);</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// 用本地变量覆盖全局变量</span></span><br><span class="line">    <span class="type">int</span> a = <span class="number">5</span>;</span><br><span class="line">    <span class="type">int</span> b = <span class="number">5</span>;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;main--3: a=%d b=%d \n&quot;</span>, a, b);</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// 测试块作用域</span></span><br><span class="line">    <span class="keyword">if</span> (a &gt; <span class="number">0</span>)&#123;</span><br><span class="line">        <span class="type">int</span> b = <span class="number">3</span>; <span class="comment">// 允许在块里覆盖外面的变量 本地b</span></span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;main--4: a=%d b=%d \n&quot;</span>, a, b);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span>&#123;</span><br><span class="line">        <span class="type">int</span> b = <span class="number">4</span>; <span class="comment">// 跟 if 块里的 b 是两个不同的变量</span></span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;main--5: a=%d b=%d \n&quot;</span>, a, b);</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;main--6: a=%d b=%d \n&quot;</span>, a, b);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//结果</span></span><br><span class="line">main-<span class="number">-1</span>: a=<span class="number">1</span> b=<span class="number">4</span> </span><br><span class="line">in fun: a=<span class="number">3</span> b=<span class="number">3</span> </span><br><span class="line">main-<span class="number">-2</span>: a=<span class="number">2</span> b=<span class="number">4</span> </span><br><span class="line">main-<span class="number">-3</span>: a=<span class="number">5</span> b=<span class="number">5</span> </span><br><span class="line">main-<span class="number">-4</span>: a=<span class="number">5</span> b=<span class="number">3</span> </span><br><span class="line">main-<span class="number">-6</span>: a=<span class="number">5</span> b=<span class="number">5</span></span><br></pre></td></tr></table></figure>
+  <img src="/2022/07/08/CompilerNote/Untitled14.png" class title="Untitled">
+<p>  java不允许块作用域里的变量覆盖外部变量 , JavaScript 是没有块作用域的。</p>
+  <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//通过HashMap保存各个变量的值</span></span><br><span class="line"><span class="keyword">private</span> Stack&lt;StackFrame&gt; stack = <span class="keyword">new</span> <span class="title class_">Stack</span>&lt;StackFrame&gt;();</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">StackFrame</span> &#123;</span><br><span class="line">		<span class="type">Scope</span> <span class="variable">scope</span> <span class="operator">=</span> <span class="literal">null</span>; <span class="comment">// 该 frame 所对应的 scope</span></span><br><span class="line">		<span class="type">StackFrame</span> <span class="variable">parentFrame</span> <span class="operator">=</span> <span class="literal">null</span>;<span class="comment">//enclosingScope 所对应的 frame</span></span><br><span class="line">		<span class="type">PlayObject</span> <span class="variable">object</span> <span class="operator">=</span> <span class="literal">null</span>;<span class="comment">// 实际存放变量的地方</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">PlayObject</span>&#123;</span><br><span class="line">	<span class="comment">// 成员变量</span></span><br><span class="line">	<span class="keyword">protected</span> Map&lt;Variable,Object&gt; fields = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;Variable,Object&gt;();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//实现块作用域</span></span><br><span class="line"><span class="type">BlockScope</span> <span class="variable">scope</span> <span class="operator">=</span> (BlockScope) cr.node2Scope.get(ctx);  <span class="comment">// 获得 Scope</span></span><br><span class="line"><span class="comment">//ctx = Context</span></span><br><span class="line"><span class="type">StackFrame</span> <span class="variable">frame</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">StackFrame</span>(scope);  <span class="comment">// 创建一个栈桢</span></span><br><span class="line">pushStack(frame);    <span class="comment">// 加入栈中</span></span><br><span class="line">...</span><br><span class="line"><span class="comment">// 运行完毕，弹出栈</span></span><br><span class="line">stack.pop();</span><br><span class="line"></span><br><span class="line"><span class="comment">//当需要获取某个变量的值的时候</span></span><br><span class="line"><span class="type">StackFrame</span> <span class="variable">f</span> <span class="operator">=</span> stack.peek();<span class="comment">// 获取栈顶的桢</span></span><br><span class="line"><span class="type">PlayObject</span> <span class="variable">valueContainer</span> <span class="operator">=</span> <span class="literal">null</span>;</span><br><span class="line"><span class="keyword">while</span>(f != <span class="literal">null</span>)&#123;</span><br><span class="line">		<span class="comment">// 看变量是否属于当前栈桢里</span></span><br><span class="line">		<span class="keyword">if</span>(f.scope.containsSymbol(variable))&#123;</span><br><span class="line">				valueContainer = f.object;</span><br><span class="line">				<span class="keyword">break</span>;</span><br><span class="line">		&#125;</span><br><span class="line"><span class="comment">// 从上一级 scope 对应的栈桢里去找</span></span><br><span class="line">		f = f.parentFrame;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>生存期 Extent</p>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"> </span><br><span class="line"><span class="type">int</span> * <span class="title function_">fun</span><span class="params">()</span>&#123;</span><br><span class="line">    <span class="type">int</span> * b = (<span class="type">int</span>*)<span class="built_in">malloc</span>(<span class="number">1</span>*<span class="keyword">sizeof</span>(<span class="type">int</span>)); <span class="comment">// 在堆中申请内存</span></span><br><span class="line">    *b = <span class="number">2</span>;  <span class="comment">// 给该地址赋值 2</span></span><br><span class="line">   </span><br><span class="line">    <span class="keyword">return</span> b;</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> **argv)</span>&#123;</span><br><span class="line">    <span class="type">int</span> * p = fun(); <span class="comment">//返回指向堆区保存着2的栈地址</span></span><br><span class="line">    *p = <span class="number">3</span>;</span><br><span class="line"> </span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;after called fun: b=%lu *b=%d \n&quot;</span>, (<span class="type">unsigned</span> <span class="type">long</span>)p, *p);</span><br><span class="line"> </span><br><span class="line">    <span class="built_in">free</span>(p);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+  <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Extent2</span>&#123;</span><br><span class="line"> </span><br><span class="line">    StringBuffer <span class="title function_">myMethod</span><span class="params">()</span>&#123;</span><br><span class="line">        <span class="type">StringBuffer</span> <span class="variable">b</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">StringBuffer</span>(); <span class="comment">// 在堆中生成对象实例</span></span><br><span class="line">        b.append(<span class="string">&quot;Hello &quot;</span>);</span><br><span class="line">        System.out.println(System.identityHashCode(b)); <span class="comment">// 打印内存地址</span></span><br><span class="line">        <span class="keyword">return</span> b;  <span class="comment">// 返回对象引用，本质是一个内存地址</span></span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String args[])</span>&#123;</span><br><span class="line">        <span class="type">Extent2</span> <span class="variable">extent2</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Extent2</span>();</span><br><span class="line">        <span class="type">StringBuffer</span> <span class="variable">c</span> <span class="operator">=</span> extent2.myMethod(); <span class="comment">// 获得对象引用</span></span><br><span class="line">        System.out.println(c);</span><br><span class="line">        c.append(<span class="string">&quot;World!&quot;</span>);         <span class="comment">// 修改内存中的内容</span></span><br><span class="line">        System.out.println(c);</span><br><span class="line"> </span><br><span class="line">        <span class="comment">// 跟在 myMethod() 中打印的值相同</span></span><br><span class="line">        System.out.println(System.identityHashCode(c));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//java 对象所采用的内存超出了申请内存时所在的作用域，所以也就没有办法自动收回。</span></span><br><span class="line"><span class="comment">//所以 Java 采用的是自动内存管理机制，也就是垃圾回收技术。</span></span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li><p>引用的消解</p>
+<p>  在程序里使用变量、函数、类等符号时，我们需要知道它们指的是谁，要能对应到定义它们的地方。下面的例子中，当使用变量 a 时，我们需要知道它是全局变量 a，还是 fun() 函数中的本地变量 a。因为不同作用域里可能有相同名称的变量，所以必须找到正确的那个。这个过程，可以叫引用消解。</p>
+<p>  而做引用消解可能会产生几个结果：</p>
+<ul>
+<li>解析出了准确的引用关系。</li>
+<li>重复定义（在声明新的符号的时候，发现这个符号已经被定义过了）。</li>
+<li>引用失败（找不到某个符号的定义）。</li>
+<li>如果两个不同的命名空间中都有相同名称的符号，编程者需要明确指定。</li>
+</ul>
+</li>
+<li><p>左值与右值</p>
+</li>
+<li><p>属性计算</p>
+<p>  属性计算是做上下文分析，或者说语义分析的一种算法。按照属性计算的视角，我们之前所处理的各种语义分析问题，都可以看做是对 AST 节点的某个属性进行计算。比如，针对求左值场景中的 primary 节点，它需要计算的属性包括：</p>
+<ul>
+<li>它的变量定义是哪个（这就引用到定义该变量的 Symbol）。</li>
+<li>它的类型是什么?</li>
+<li>它的作用域是什么？</li>
+<li>这个节点求值时，是否该返回左值？能否正确地返回一个左值？</li>
+<li>它的值是什么？</li>
+</ul>
+<p>  从属性计算的角度看，对表达式求值，或运行脚本，只是去计算 AST 节点的 Value 属性，Value 这个属性能够计算，其他属性当然也能计算。</p>
+<p>  属性计算需要用到属性文法。在词法、语法分析阶段，我们分别学习了正则文法和上下文无关文法，在语义分析阶段我们要了解的是<strong>属性文法（Attribute Grammar）。</strong></p>
+<p>  总结一下属性计算的特点：<strong>它会基于语法规则，增加一些与语义处理有关的规则</strong>。所以，我们也把这种语义规则的定义叫做<strong>语法制导的定义</strong>（Syntax directed definition，SDD），如果变成计算动作，就叫做<strong>语法制导的翻译</strong>（Syntax directed translation，SDT）。</p>
+  <figure class="highlight jsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">public <span class="keyword">class</span> <span class="title class_">AnnotatedTree</span> &#123;</span><br><span class="line">    <span class="comment">// AST</span></span><br><span class="line">    protected <span class="title class_">ParseTree</span> ast = <span class="literal">null</span>;</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// 解析出来的所有类型，包括类和函数</span></span><br><span class="line">    protected <span class="title class_">List</span>&lt;<span class="title class_">Type</span>&gt; types = <span class="keyword">new</span> <span class="title class_">LinkedList</span>&lt;<span class="title class_">Type</span>&gt;();</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// AST 节点对应的 Symbol</span></span><br><span class="line">    protected <span class="title class_">Map</span>&lt;<span class="title class_">ParserRuleContext</span>, <span class="title class_">Symbol</span>&gt; symbolOfNode = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;<span class="title class_">ParserRuleContext</span>, <span class="title class_">Symbol</span>&gt;();</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// AST 节点对应的 Scope，如 for、函数调用会启动新的 Scope</span></span><br><span class="line">    protected <span class="title class_">Map</span>&lt;<span class="title class_">ParserRuleContext</span>, <span class="title class_">Scope</span>&gt; node2Scope = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;<span class="title class_">ParserRuleContext</span>, <span class="title class_">Scope</span>&gt;();</span><br><span class="line"> </span><br><span class="line">    <span class="comment">// 每个节点推断出来的类型</span></span><br><span class="line">    protected <span class="title class_">Map</span>&lt;<span class="title class_">ParserRuleContext</span>, <span class="title class_">Type</span>&gt; typeOfNode = <span class="keyword">new</span> <span class="title class_">HashMap</span>&lt;<span class="title class_">ParserRuleContext</span>, <span class="title class_">Type</span>&gt;();</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 命名空间，作用域的根节点</span></span><br><span class="line">    <span class="title class_">NameSpace</span> nameSpace = <span class="literal">null</span>;  </span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li><p>类型系统</p>
+<ul>
+<li><p>类型推导（Type Inference）</p>
+<p>  如果一种属性能够从<strong>下级节点</strong>推导出来，那么这种属性就叫做 <strong>S 属性</strong>，字面意思是综合属性，就是在 AST 中从下级的属性归纳、综合出本级的属性。更准确地说，是通过下级节点和自身来确定的。</p>
+  <img src="/2022/07/08/CompilerNote/Untitled15.png" class title="Untitled">
+<p>  与 S 属性相对应的是<strong>I 属性（Inherited Attribute）</strong>继承属性，即 AST 中某个节点的属性是由<strong>上级节点、兄弟节点和它自身</strong>来决定的</p>
+<ul>
+<li><p>例子</p>
+  <figure class="highlight jsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//变量声明的语法</span></span><br><span class="line">variableDeclarators</span><br><span class="line">    : typeType variableDeclarator (<span class="string">&#x27;,&#x27;</span> variableDeclarator)*</span><br><span class="line">    ;</span><br><span class="line"> </span><br><span class="line">variableDeclarator</span><br><span class="line">    : variableDeclaratorId (<span class="string">&#x27;=&#x27;</span> variableInitializer)?</span><br><span class="line">    ;</span><br><span class="line"> </span><br><span class="line">variableDeclaratorId</span><br><span class="line">    : <span class="variable constant_">IDENTIFIER</span> (<span class="string">&#x27;[&#x27;</span> <span class="string">&#x27;]&#x27;</span>)*</span><br><span class="line">    ;</span><br><span class="line"> </span><br><span class="line">typeType</span><br><span class="line">    : (classOrInterfaceType| functionType | primitiveType) (<span class="string">&#x27;[&#x27;</span> <span class="string">&#x27;]&#x27;</span>)*</span><br><span class="line">    ;</span><br></pre></td></tr></table></figure>
+<p>  那么int a;这句变量声明的AST就会：</p>
+  <img src="/2022/07/08/CompilerNote/Untitled16.png" class title="Untitled">
+<p>  这棵树的左枝，可以从下向上推导类型，所以类型属性也就是 S 属性。而右枝则必须从根节点（也就是 variableDeclarators）往下继承类型属性，所以对于 a 这个节点来说，它的类型属性是 I 属性。</p>
+</li>
+<li><p>c++ auto变量能进行对象类型推导如何实现</p>
+<p>  类型推断就是两个计算过程。一个是S属性（综合属性）<strong>（Synthesized Attribute）</strong>计算，从下往上推导，比如：</p>
+<p>  auto a &#x3D; 2;</p>
+<p>  从叶子节点2能推导出这整个语句的类型是int。再做I属性（继承属性）计算，就是从上到下的推导。a是这个表达式的叶子节点，a的类型是可以从整个表达式的类型继承下来。</p>
+</li>
+</ul>
+</li>
+<li><p>类型检查（Type Checking）</p>
+<p>  类型检查主要出现在几个场景中：</p>
+<ul>
+<li>赋值语句（检查赋值操作左边和右边的类型是否匹配）。</li>
+<li>变量声明语句（因为变量声明语句中也会有初始化部分，所以也需要类型匹配）。</li>
+<li>函数传参（调用函数的时候，传入的参数要符合形参的要求）。</li>
+<li>函数返回值（从函数中返回一个值的时候，要符合函数返回值的规定）。</li>
+</ul>
+<p>  类型检查还有一个特点：以赋值语句为例，左边的类型，是 I 属性，是从声明中得到的；右边的类型是 S 属性，是自下而上综合出来的。当左右两边的类型相遇之后，就要检查二者是否匹配，被赋值的变量要满足左边的类型要求。
+  </p>
+</li>
+<li><p>类型转换（Type Conversion）</p>
+</li>
+<li><p>子类型</p>
+<p>  面向对象编程时，我们可以给某个类创建不同的子类，实现一些个性化的功能；写程序时，我们可以站在抽象度更高的层次上，不去管具体的差异。如果把上面的结论抽象成一般意义上的类型理论，就是<strong>子类型（subtype）。</strong></p>
+<p>  子类型（或者动名词：子类型化），是对我们前面讲的类型体系的一个补充。</p>
+<p>  子类型有两种实现方式：一种就是像 Java 和 C++ 语言，需要显式声明继承了什么类，或者实现了什么接口。这种叫做<strong>名义子类型</strong>（Nominal Subtyping）。另一种是<strong>结构化子类型</strong>（Structural Subtyping），又叫鸭子类型（Duck Type）</p>
+  <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//在调用类的属性和方法时，我们可以根据运行时获得的，确定的类型信息进行动态绑定</span></span><br><span class="line"><span class="comment">//实现多态</span></span><br><span class="line"><span class="keyword">protected</span> Function <span class="title function_">getFunction</span><span class="params">(String name,List&lt;Type&gt; paramTypes)</span>&#123;</span><br><span class="line"><span class="comment">// 在本级查找这个这个方法</span></span><br><span class="line">    <span class="type">Function</span> <span class="variable">rtn</span> <span class="operator">=</span> <span class="built_in">super</span>.getFunction(name, paramTypes);  <span class="comment">//TODO 是否要检查 visibility</span></span><br><span class="line">    <span class="comment">// 如果在本级找不到，那么递归的从父类中查找</span></span><br><span class="line">    <span class="keyword">if</span> (rtn == <span class="literal">null</span> &amp;&amp; parentClass != <span class="literal">null</span>)&#123;</span><br><span class="line">        rtn = parentClass.getFunction(name,paramTypes);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> rtn;</span><br><span class="line">&#125; </span><br></pre></td></tr></table></figure>
+<p>  如果当前类里面没有实现这个方法，它可以直接复用某一级的父类中的实现，<strong>这实际上就是继承机制在运行期的原理。</strong></p>
+<ul>
+<li>this和super</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>闭包</p>
+  <figure class="highlight jsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> a = <span class="number">0</span>;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">var</span> fun1 = <span class="keyword">function</span>(<span class="params"></span>)&#123;</span><br><span class="line">    <span class="keyword">var</span> b = <span class="number">0</span>;                <span class="comment">// 函数内的局部变量</span></span><br><span class="line"> </span><br><span class="line">    <span class="keyword">var</span> inner = <span class="keyword">function</span>(<span class="params"></span>)&#123;   <span class="comment">// 内部的一个函数</span></span><br><span class="line">        a = a+<span class="number">1</span>;</span><br><span class="line">        b = b+<span class="number">1</span>;</span><br><span class="line">        <span class="keyword">return</span> b;             <span class="comment">// 返回内部的成员</span></span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">return</span> inner;             <span class="comment">// 返回一个函数</span></span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;outside:  a=%d&quot;</span>, a);</span><br><span class="line"> </span><br><span class="line"><span class="keyword">var</span> fun2 = <span class="title function_">fun1</span>();                            <span class="comment">// 生成闭包</span></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">var</span> i = <span class="number">0</span>; i&lt; <span class="number">2</span>; i++)&#123;</span><br><span class="line">    <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;fun2: b=%d a=%d&quot;</span>,<span class="title function_">fun2</span>(), a); <span class="comment">// 通过 fun2() 来访问 b</span></span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="keyword">var</span> fun3 = <span class="title function_">fun1</span>();                            <span class="comment">// 生成第二个闭包</span></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">var</span> i = <span class="number">0</span>; i&lt; <span class="number">2</span>; i++)&#123;</span><br><span class="line">    <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;fun3: b=%d a=%d&quot;</span>,<span class="title function_">fun3</span>(), a); <span class="comment">// b 等于 1，重新开始</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//output</span></span><br><span class="line"><span class="attr">outside</span>:  a=<span class="number">0</span></span><br><span class="line"><span class="attr">fun2</span>: b=<span class="number">1</span> a=<span class="number">1</span> <span class="comment">//生成闭包，创建外部的b = 0</span></span><br><span class="line"><span class="attr">fun2</span>: b=<span class="number">2</span> a=<span class="number">2</span></span><br><span class="line"><span class="attr">fun3</span>: b=<span class="number">1</span> a=<span class="number">3</span> <span class="comment">//生成闭包，创建外部的b = 0</span></span><br><span class="line"><span class="attr">fun3</span>: b=<span class="number">2</span> a=<span class="number">4</span></span><br></pre></td></tr></table></figure>
+<p>  内层函数能访问它“看得见”的变量，包括自己的<strong>本地变量</strong>、<strong>外层函数的变量 b</strong> 和<strong>全局变量 a</strong>。就是说，内层函数作为返回值赋值给其他变量以后，外层函数就结束了，但内层函数仍能访问原来外层函数的变量 b，也能访问全局变量 a。</p>
+  <img src="/2022/07/08/CompilerNote/Untitled17.png" class title="Untitled">
+<p>  闭包的内在矛盾是<strong>运行时</strong>的环境和<strong>定义时</strong>的作用域之间的矛盾。那么我们把内部环境中需要的变量，打包交给闭包函数，它就可以随时访问这些变量了。</p>
+</li>
+</ul>
+<h1 id="后端"><a href="#后端" class="headerlink" title="后端"></a>后端</h1><ul>
+<li><p>中间代码（Intermediate Representation，IR）的机制</p>
+<p>  IR 可以有多种格式，在第 24 讲，我们会介绍三地址代码、静态单赋值码等不同的 IR。比如，“x + y * z”翻译成三地址代码是下面的样子，每行代码最多涉及三个地址，其中 t1 和 t2 是临时变量：</p>
+  <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">t1 := y * z</span><br><span class="line">t2 := x + t1</span><br></pre></td></tr></table></figure>
+<p>  Java 语言生成的字节码也是一种 IR ，AST 其实也可以看做一种 IR。我们在前端部分实现的脚本语言，就是基于 AST 这个 IR 来运行的。</p>
+<p>  每种 IR 的目的和用途是不一样的：</p>
+<ul>
+<li>AST 主要用于前端的工作。</li>
+<li>Java 的字节码，是设计用来在虚拟机上运行的。</li>
+<li>LLVM 的中间代码，主要是用于做代码翻译和编译优化的。</li>
+</ul>
+</li>
+<li><p>代码优化</p>
+<p>  有多种优化技术，比如局部优化和全局优化，代数优化、常数折叠、拷贝传播、常数传播、删除公共子表达式、删除不可达块、死代码删除等，其中数据流分析方法比较重要。又例如mem2reg 算法，会把对内存的访问优化成尽量访问寄存器。</p>
+<ul>
+<li><p>本地优化（针对一个基本块）</p>
+<p>  可用表达式分析和活跃性分析，都可以看做是由下面 4个元素构成的：</p>
+<ul>
+<li><p>D（方向）：是朝前还是朝后遍历。</p>
+</li>
+<li><p>V（值）：代码的每一个地方都要计算出一个值。可用表达式分析和活跃性分析的值是一个集合，也有些分析的值并不是集合，在下一讲你会看到这样的例子。</p>
+</li>
+<li><p>F（转换函数，对 V 进行转换）：比如，在做可用表达式分析的时候，遇到了“c :&#x3D;b”时，可用表达式的集合从{a :&#x3D; b, c :&#x3D; a + b}转换成了{a :&#x3D; b, c :&#x3D; b}。<strong>这里遵守的转换规则是：</strong>因为变量 c 被重新赋值了，那么就从集合里，把变量 c 原来的定义去掉，并把带有 c的表达式都去掉，因为过去的 c 已经失效了，然后，把变量 c 新的定义加进去。</p>
+</li>
+<li><p>I（初始值，是算法开始时 V 的取值）：做可用表达式分析的时候，初始值是空集。在做</p>
+</li>
+<li><p>Λ（lambda）：做全局优化的时候，两个分支相遇的时，要做一个运算，计算他们相交的值。</p>
+<p>  活跃性分析的时候，初始值是后面代码中还会访问的变量，也就是活变量。</p>
+</li>
+</ul>
+<p>  在 LLVM 内部，优化工作是通过一个个的 Pass（遍）来实现的，它支持三种类型的Pass：</p>
+<ul>
+<li>分析型的 Pass（Analysis Passes），只是做分析，产生一些分析结果用于后序操作。</li>
+<li>代码转换的Pass（Transform Passes），比如做公共子表达式删除。</li>
+<li>工具型pass ，比如对模块做正确性验证。</li>
+</ul>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//创建一个 PassManager</span></span><br><span class="line">TheFPM = <span class="built_in">std</span>::make_unique&lt;legacy::FunctionPassManager&gt;(TheModule.get());</span><br><span class="line"><span class="comment">//优化添加两个pass</span></span><br><span class="line"><span class="comment">//窥孔优化和一些计算优化</span></span><br><span class="line">TheFPM-&gt;add(createInstructionCombiningPass());</span><br><span class="line"><span class="comment">//表达式重关联</span></span><br><span class="line">TheFPM-&gt;add(createReassociatePass());</span><br><span class="line">TheFPM-&gt;doInitialization();</span><br><span class="line">TheFPM-&gt;run(*fun);</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>全局优化（针对多个基本块）</p>
+<ul>
+<li>代码移动（code motion）能够将代码从一个基本块挪到另一个基本块，比如从循环内<br>  部挪到循环外部，来减少不必要的计算。</li>
+<li>部分冗余删除（Partial Redundancy Elimination），它能把一个基本块都删掉。</li>
+</ul>
+<p>  在本地优化的算法思路上，解决掉多路径情况下，V 值的计算问题。<strong>而这种基于 CFG 做优化分析的方法框架，就叫做数据流分析。</strong>
+  </p>
+</li>
+<li><p>数据流分析</p>
+<ul>
+<li><p>活跃性分析</p>
+  <img src="/2022/07/08/CompilerNote/Untitled18.png" class title="Untitled">
+  <img src="/2022/07/08/CompilerNote/Untitled19.png" class title="Untitled">
+<p>  加个环路，运用不动点算法：给每个基本块的V值都分配初始值，也就是空集合，然后对所有节点多次计算，直到所有集合都稳定为止。注意四块都是相互依赖的，不能删去d</p>
+  <img src="/2022/07/08/CompilerNote/Untitled20.png" class title="Untitled">
+</li>
+<li><p>半格理论（Semilattice）</p>
+<p>  半格理论是一种偏序集，偏序集就是集合中只有部分成员能互相比较大小。例如，在做全局活跃性分析的时候，{a, b, c}和{a, c}相遇，产生的新值是{a, b, c}。我们形式化地写成{a, b, c} Λ {a, c} &#x3D; {a, b, c}。这时候我们说{a, b, c}是可以跟{a, c}比较大小的。那么哪个大哪个小呢？如果 XΛY&#x3D;X，我们说 X&lt;&#x3D;Y。<br>  所以，{a, b, c}是比较小的，{a, c}是比较大的。<br>  当然，{a, b, c}也可以跟{a, b}比较大小，但它没有办法跟{c, d}比较大小。所以把包含了</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/">Home</a></li>
+        
+          <li><a href="/about/">About</a></li>
+        
+          <li><a href="/archives/">Writing</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="http://github.com/yushusu">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    
+    
+      <div id="toc-footer" style="display: none">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E7%AB%AF"><span class="toc-number">1.</span> <span class="toc-text">前端</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%90%8E%E7%AB%AF"><span class="toc-number">2.</span> <span class="toc-text">后端</span></a></li></ol>
+      </div>
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://yushusu.github.io/2022/07/08/CompilerNote/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://yushusu.github.io/2022/07/08/CompilerNote/&text=CompilerNote"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://yushusu.github.io/2022/07/08/CompilerNote/&title=CompilerNote"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yushusu.github.io/2022/07/08/CompilerNote/&is_video=false&description=CompilerNote"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=CompilerNote&body=Check out this article: http://yushusu.github.io/2022/07/08/CompilerNote/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://yushusu.github.io/2022/07/08/CompilerNote/&title=CompilerNote"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://yushusu.github.io/2022/07/08/CompilerNote/&title=CompilerNote"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://yushusu.github.io/2022/07/08/CompilerNote/&title=CompilerNote"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://yushusu.github.io/2022/07/08/CompilerNote/&title=CompilerNote"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://yushusu.github.io/2022/07/08/CompilerNote/&name=CompilerNote&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://yushusu.github.io/2022/07/08/CompilerNote/&t=CompilerNote"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
+        
+          <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fa-solid fa-list fa-lg" aria-hidden="true"></i> TOC</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2016-2023
+    yushusu
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">Home</a></li><!--
+     --><!--
+       --><li><a href="/about/">About</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="http://github.com/yushusu">Projects</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"Copy to clipboard!\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "Copied!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>

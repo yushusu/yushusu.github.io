@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="GitHub Security Lab CTF 1: SEGV hunthttps:&#x2F;&#x2F;securitylab.github.com&#x2F;ctf&#x2F;segv&#x2F; 挖GNU C lib（glibc）中的alloca洞，用来给栈分配缓冲区的。不安全的点在于：没有检查是否有足够的栈空间留给缓冲区，如果所需缓冲区太大导致alloca返回一个不可用指针，可能会在读写buffer的时候导致SIGSEGV。所以allo">
+<meta property="og:type" content="article">
+<meta property="og:title" content="GitHub Security Lab CTF 1: SEGV hunt">
+<meta property="og:url" content="http://yushusu.github.io/2022/08/09/GitHub-Security-Lab-CTF-1-SEGV-hunt/">
+<meta property="og:site_name" content="YUSHUSU">
+<meta property="og:description" content="GitHub Security Lab CTF 1: SEGV hunthttps:&#x2F;&#x2F;securitylab.github.com&#x2F;ctf&#x2F;segv&#x2F; 挖GNU C lib（glibc）中的alloca洞，用来给栈分配缓冲区的。不安全的点在于：没有检查是否有足够的栈空间留给缓冲区，如果所需缓冲区太大导致alloca返回一个不可用指针，可能会在读写buffer的时候导致SIGSEGV。所以allo">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2022-08-09T03:05:46.000Z">
+<meta property="article:modified_time" content="2023-07-09T03:23:54.571Z">
+<meta property="article:author" content="yushusu">
+<meta name="twitter:card" content="summary">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>GitHub Security Lab CTF 1: SEGV hunt</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/archives/">Home</a></li><!--
+     --><!--
+       --><li><a href="/about/">About</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="http://github.com/yushusu">Projects</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" aria-label="Previous post" href="/2023/01/09/CVE-2010-2883-Adobe-Reader-TTF-SING/"><i class="fa-solid fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" aria-label="Next post" href="/2022/07/09/A-simple-fuzzer/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="Back to top" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="Share post" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://yushusu.github.io/2022/08/09/GitHub-Security-Lab-CTF-1-SEGV-hunt/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://yushusu.github.io/2022/08/09/GitHub-Security-Lab-CTF-1-SEGV-hunt/&text=GitHub Security Lab CTF 1: SEGV hunt"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://yushusu.github.io/2022/08/09/GitHub-Security-Lab-CTF-1-SEGV-hunt/&title=GitHub Security Lab CTF 1: SEGV hunt"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yushusu.github.io/2022/08/09/GitHub-Security-Lab-CTF-1-SEGV-hunt/&is_video=false&description=GitHub Security Lab CTF 1: SEGV hunt"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=GitHub Security Lab CTF 1: SEGV hunt&body=Check out this article: http://yushusu.github.io/2022/08/09/GitHub-Security-Lab-CTF-1-SEGV-hunt/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://yushusu.github.io/2022/08/09/GitHub-Security-Lab-CTF-1-SEGV-hunt/&title=GitHub Security Lab CTF 1: SEGV hunt"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://yushusu.github.io/2022/08/09/GitHub-Security-Lab-CTF-1-SEGV-hunt/&title=GitHub Security Lab CTF 1: SEGV hunt"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://yushusu.github.io/2022/08/09/GitHub-Security-Lab-CTF-1-SEGV-hunt/&title=GitHub Security Lab CTF 1: SEGV hunt"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://yushusu.github.io/2022/08/09/GitHub-Security-Lab-CTF-1-SEGV-hunt/&title=GitHub Security Lab CTF 1: SEGV hunt"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://yushusu.github.io/2022/08/09/GitHub-Security-Lab-CTF-1-SEGV-hunt/&name=GitHub Security Lab CTF 1: SEGV hunt&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://yushusu.github.io/2022/08/09/GitHub-Security-Lab-CTF-1-SEGV-hunt/&t=GitHub Security Lab CTF 1: SEGV hunt"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    
+    
+      <div id="toc">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#GitHub-Security-Lab-CTF-1-SEGV-hunt"><span class="toc-number">1.</span> <span class="toc-text">GitHub Security Lab CTF 1: SEGV hunt</span></a></li></ol>
+      </div>
+    
+  </span>
+</div>
+
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        GitHub Security Lab CTF 1: SEGV hunt
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">yushusu</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2022-08-09T03:05:46.000Z" class="dt-published" itemprop="datePublished">2022-08-09</time>
+        
+      
+    </div>
+
+
+      
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <h1 id="GitHub-Security-Lab-CTF-1-SEGV-hunt"><a href="#GitHub-Security-Lab-CTF-1-SEGV-hunt" class="headerlink" title="GitHub Security Lab CTF 1: SEGV hunt"></a>GitHub Security Lab CTF 1: SEGV hunt</h1><p><a target="_blank" rel="noopener" href="https://securitylab.github.com/ctf/segv/">https://securitylab.github.com/ctf/segv/</a></p>
+<p>挖GNU C lib（glibc）中的alloca洞，用来给栈分配缓冲区的。不安全的点在于：没有检查是否有足够的栈空间留给缓冲区，如果所需缓冲区太大导致alloca返回一个不可用指针，可能会在读写buffer的时候导致SIGSEGV。所以alloca一般用于分配小buffer。glibc调用了几百次alloca，你要用CodeQL找到没有检查buffer大小的洞</p>
+<ul>
+<li>找到alloc的宏。它是一个__builtin_alloca扩展的内置函数</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">import cpp</span><br><span class="line">from FunctionCall fc #all calls in program</span><br><span class="line">where fc.getTarget().getName() = &quot;__builtin_alloca&quot;</span><br><span class="line">#getTarget可以获取所有被调用者</span><br><span class="line">select fc</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>过滤小buffer</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">import semmle.code.cpp.rangeanalysis.SimpleRangeAnalysis</span><br><span class="line">import cpp</span><br><span class="line">from Function fc</span><br><span class="line">where fc.getTarget().hasQualifiedName(&quot;__builtin_alloca&quot;) and (</span><br><span class="line">upperBound(fc.getArgument(0).getFullyConverted()) &gt;= 65536 or</span><br><span class="line"> lowerBound(fc.getArgument(0).getFullyConverted()) &lt; 0</span><br><span class="line">)</span><br><span class="line">#找出特定表达式可以具有的最大和最小范围,发现越界漏洞或整数溢出漏洞时很有用</span><br><span class="line">select fc,fc.getFile().toString() + &quot;:L&quot; + fc.getLocation().getStartLine()</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>过滤被<code>__libc_use_alloca</code> ********保护的alloc调用</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">import cpp</span><br><span class="line">import semmle.code.cpp.controlflow.Guards</span><br><span class="line">from FunctionCall fc, GuardCondition gc, FunctionCall fc2</span><br><span class="line"></span><br><span class="line">string getPostfix(Expr f)&#123;</span><br><span class="line">		result = f.getFile().toString() + &quot;:L&quot; +f.getLocation().getStartLine().getStratLine()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">where fc2.getTarget().hasQualifiedName(&quot;__libc_use_alloca&quot;)</span><br><span class="line">	and fc.getTarget().hasQualifiedName(&quot;__builtin_alloca&quot;)</span><br><span class="line">#检测在__alloca进入Basic Block的条件下__libc_use_alloca函数被调用的次数</span><br><span class="line">	and gc.controls(fc.getBasicBlock(), _) #返回 条件语句控制指定基本块 的条件语句</span><br><span class="line">	and gc.getAChild*() = fc2 #保证要找的保护条件是基于__libc_use_alloca</span><br><span class="line"># *是自反传递闭包，应用这个谓词零次或多次（包括它自己）</span><br><span class="line">select gc,getPostfix(gc)</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>有时将结果<code>__libc_use_alloca</code>赋值给一个变量，然后将其用作保护条件。用<code>local dataflow</code>找到此保护条件。</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">import semmle.code.cpp.controlflow.Guards</span><br><span class="line">import semmle.code.cpp.dataflow.DataFlow</span><br><span class="line"></span><br><span class="line">string getPostfix(Expr f)&#123;</span><br><span class="line">		result = f.getFile().toString() + &quot;:L&quot; +f.getLocation().getStartLine().getStratLine()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">from FunctionCall fc, FunctionCall fc2, GuardCondition gc,</span><br><span class="line">DataFlow::Node source, DataFlow::Node sink</span><br><span class="line">where fc.getTarget().getName() = &quot;__builtin_alloca&quot;</span><br><span class="line">    and fc2.getTarget().getName() = &quot;__libc_use_alloca&quot;</span><br><span class="line">    and gc.controls(fc.getBasicBlock(), _)</span><br><span class="line">    and DataFlow::localFlow(source , sink)</span><br><span class="line">    and source.asExpr() = fc2 #污染源</span><br><span class="line">    and sink.asExpr() = gc #敏感点</span><br><span class="line">select gc,getPostfix(fc2)</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>有时<code>__libc_use_alloca</code>会被封装送到到<code>__builtin_expect</code>的调用里，过滤闭包找到它</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">import semmle.code.cpp.controlflow.Guards</span><br><span class="line">import semmle.code.cpp.dataflow.DataFlow</span><br><span class="line"></span><br><span class="line">string getPostfix(Expr f)&#123;</span><br><span class="line">		result = f.getFile().toString() + &quot;:L&quot; +f.getLocation().getStartLine().getStratLine()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">from FunctionCall fc, FunctionCall fc2, GuardCondition gc,</span><br><span class="line">DataFlow::Node source, DataFlow::Node sink</span><br><span class="line">where fc.getTarget().getName() = &quot;__builtin_alloca&quot;</span><br><span class="line">    and fc2.getTarget().getName() = &quot;__libc_use_alloca&quot;</span><br><span class="line">    and gc.controls(fc.getBasicBlock(), _)</span><br><span class="line">    and DataFlow::localFlow(source , sink)</span><br><span class="line">    and source.asExpr() = fc2</span><br><span class="line">    and sink.asExpr() = gc.getAChild*() </span><br><span class="line">    # * is Reflexive transitive closure, apply this predicate zero or more times.</span><br><span class="line">    #   gc.getAChild*() means gc and gc&#x27;s all chlidren</span><br><span class="line">    # __builtin_expect(__libc_use_alloca()), __libc_use_alloca is __builtin_expect&#x27;s child.</span><br><span class="line">select gc,getPostfix(gc)</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>过滤掉！取反的情况，利用<a target="_blank" rel="noopener" href="https://codeql.github.com/codeql-standard-libraries/cpp/semmle/code/cpp/controlflow/ControlFlowGraph.qll/type.ControlFlowGraph$ControlFlowNode.html">ControlFlowNode</a></li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">import semmle.code.cpp.controlflow.Guards</span><br><span class="line">import semmle.code.cpp.dataflow.DataFlow</span><br><span class="line"></span><br><span class="line">string getPostfix(Expr f)&#123;</span><br><span class="line">		result = f.getFile().toString() + &quot;:L&quot; +f.getLocation().getStartLine().getStratLine()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">from FunctionCall fc, FunctionCall fc2, GuardCondition gc,</span><br><span class="line">GuardCondition guard,BasicBlock block1,BasicBlock block2,</span><br><span class="line">DataFlow::Node source, DataFlow::Node sink</span><br><span class="line"></span><br><span class="line">where fc.getTarget().getName() = &quot;__builtin_alloca&quot;</span><br><span class="line">    and fc2.getTarget().getName() = &quot;__libc_use_alloca&quot;</span><br><span class="line">		and block1.contains(fc)</span><br><span class="line">		and guard.controls(block1, _) #包含__builtin_alloca的条件语句</span><br><span class="line">		and DataFlow::localFlow(source,sink)</span><br><span class="line">		and block2.contains(fc2) </span><br><span class="line">		and source.asExpr() = block2.getANode() #扩大__libc_use_alloca上下游基础块的查找</span><br><span class="line">		and sink.asExpr() = guard.getAChild*()</span><br><span class="line">select guard,getPostfix(guard)</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>找到受<code>__libc_use_alloca</code>保护的安全的<code>alloca</code>调用，加上OOB</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">import semmle.code.cpp.controlflow.Guards</span><br><span class="line">import semmle.code.cpp.dataflow.DataFlow</span><br><span class="line"></span><br><span class="line">string getPostfix(Expr f)&#123;</span><br><span class="line">		result = f.getFile().toString() + &quot;:L&quot; +f.getLocation().getStartLine().getStratLine()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">predicate isSafeAllocaCall(FunctionCall fc) &#123;</span><br><span class="line">     exists( FunctionCall fc2, GuardCondition gc,</span><br><span class="line">						 DataFlow::Node source, DataFlow::Node sink</span><br><span class="line">			       |   fc2.getTarget().getName() = &quot;__libc_use_alloca&quot;</span><br><span class="line">            and gc.controls(fc.getBasicBlock(), _)</span><br><span class="line">            and DataFlow::localFlow(source , sink)</span><br><span class="line">            and source.asExpr() = fc2.getBasicBlock().getANode()</span><br><span class="line">            and sink.asExpr() = gc.getAChild*() </span><br><span class="line">        )   </span><br><span class="line"> &#125;</span><br><span class="line"></span><br><span class="line">from FunctionCall fc</span><br><span class="line">Where fc.getTarget().hasQualifiedName(&quot;__builtin_alloca&quot;)</span><br><span class="line">	and isSafeAllocaCall(fc)</span><br><span class="line">	and upperBound(fc.getArgument(0).getFullyConverted()) &lt;65535</span><br><span class="line">	and lowerBound(fc.getArgument(0).getFullyConverted()) &gt; 0</span><br><span class="line">select fc,&quot;is safe calls __alloca()&quot;,getPostfix(fc)</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>污点跟踪找到不安全的alloca调用，其分配大小被变量所控制且这个变量从file里读取。首先找到fopen。source是fopen的调用，sink是危险调用alloca的参数大小，寻找二者可达路径。</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">import cpp</span><br><span class="line">import semmle.code.cpp.rangeanalysis.SimpleRangeAnalysis</span><br><span class="line">import semmle.code.cpp.dataflow.TaintTracking</span><br><span class="line">import semmle.code.cpp.models.interfaces.DataFlow</span><br><span class="line">import semmle.code.cpp.controlflow.Guards</span><br><span class="line">import DataFlow::PathGraph</span><br><span class="line"></span><br><span class="line"># Track taint through `__strnlen`.</span><br><span class="line">class StrlenFunction extends DataFlowFunction &#123;</span><br><span class="line">  StrlenFunction() &#123; this.getName().matches(&quot;%str%len%&quot;) &#125;</span><br><span class="line"></span><br><span class="line">  override predicate hasDataFlow(FunctionInput i, FunctionOutput o) &#123;</span><br><span class="line">    i.isParameter(0) and o.isReturnValue()</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"># Track taint through `__getdelim`.</span><br><span class="line">class GetDelimFunction extends DataFlowFunction &#123;</span><br><span class="line">  GetDelimFunction() &#123; this.getName().matches(&quot;%get%delim%&quot;) &#125;</span><br><span class="line"></span><br><span class="line">  override predicate hasDataFlow(FunctionInput i, FunctionOutput o) &#123;</span><br><span class="line">    i.isParameter(3) and o.isParameterDeref(0)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">class Config extends TaintTracking::Configuration &#123;</span><br><span class="line">  Config() &#123; this = &quot;fopen_to_alloca_taint&quot; &#125;</span><br><span class="line"></span><br><span class="line">  override predicate isSource(DataFlow::Node source) &#123;</span><br><span class="line">    exists(FunctionCall fc | </span><br><span class="line">        fc.getTarget().getName() = &quot;_IO_new_fopen&quot;</span><br><span class="line">        and source.asExpr() = fc</span><br><span class="line">        )</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  override predicate isSink(DataFlow::Node sink) &#123;</span><br><span class="line">    exists(Expr sizeExpr, FunctionCall alloca|</span><br><span class="line">        alloca.getTarget().getName() = &quot;__builtin_alloca&quot;</span><br><span class="line">        and not isSafeAllocaCall(alloca)</span><br><span class="line">        and (upperBound(alloca.getArgument(0).getFullyConverted()) &gt;= 65535 or upperBound(alloca.getArgument(0).getFullyConverted()) &lt; 0)</span><br><span class="line">        and sizeExpr = alloca.getArgument(0).getFullyConverted()</span><br><span class="line">        and sink.asExpr() = sizeExpr #sink是危险点</span><br><span class="line">        )</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">from Config cfg, DataFlow::PathNode source, DataFlow::PathNode sink</span><br><span class="line">where cfg.hasFlowPath(source, sink)</span><br><span class="line">select sink, source, sink, &quot;fopen flows to alloca&quot;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>分析crashes，调试下输入，利用poc</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">fopen flows to alloca	gconv_conf.c:323:25</span><br><span class="line">Path</span><br><span class="line">1	call to _IO_new_fopen 	gconv_conf.c:369:14</span><br><span class="line">2	rp 	gconv_conf.c:418:14</span><br><span class="line">3	rp 	gconv_conf.c:250:19</span><br><span class="line">4	... + ... 	gconv_conf.c:323:25</span><br></pre></td></tr></table></figure>
+
+<p>源头是 read_conf_file 里从 filename 打开的 fp 文件句柄，</p>
+<p>解析文件字节流时使用的 (char * )rp 在解析conf文件中的module块时会进入 add_module 并把rp作为实参</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* Read the next configuration file.  */</span></span><br><span class="line"><span class="type">static</span> <span class="type">void</span></span><br><span class="line"><span class="title function_">read_conf_file</span> <span class="params">(<span class="type">const</span> <span class="type">char</span> *filename, <span class="type">const</span> <span class="type">char</span> *directory, <span class="type">size_t</span> dir_len,</span></span><br><span class="line"><span class="params">		<span class="type">void</span> **modules, <span class="type">size_t</span> *nmodules)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="comment">/* Note the file is opened with cancellation in the I/O functions</span></span><br><span class="line"><span class="comment">     disabled.  */</span></span><br><span class="line">  FILE *fp = fopen (filename, <span class="string">&quot;rce&quot;</span>);</span><br><span class="line">  ...</span><br><span class="line">      <span class="keyword">if</span> (rp - word == <span class="keyword">sizeof</span> (<span class="string">&quot;alias&quot;</span>) - <span class="number">1</span></span><br><span class="line">	  &amp;&amp; <span class="built_in">memcmp</span> (word, <span class="string">&quot;alias&quot;</span>, <span class="keyword">sizeof</span> (<span class="string">&quot;alias&quot;</span>) - <span class="number">1</span>) == <span class="number">0</span>)</span><br><span class="line">	add_alias (rp, *modules);</span><br><span class="line">      <span class="keyword">else</span> <span class="keyword">if</span> (rp - word == <span class="keyword">sizeof</span> (<span class="string">&quot;module&quot;</span>) - <span class="number">1</span></span><br><span class="line">	       &amp;&amp; <span class="built_in">memcmp</span> (word, <span class="string">&quot;module&quot;</span>, <span class="keyword">sizeof</span> (<span class="string">&quot;module&quot;</span>) - <span class="number">1</span>) == <span class="number">0</span>)</span><br><span class="line">	add_module (rp, directory, dir_len, modules, nmodules, modcounter++);</span><br><span class="line">      <span class="comment">/* else */</span></span><br><span class="line">	<span class="comment">/* Otherwise ignore the line.  */</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">  <span class="built_in">free</span> (line);</span><br><span class="line"></span><br><span class="line">  fclose (fp);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在add_module里rp形参被赋给了from</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* Add new module.  */</span></span><br><span class="line"><span class="type">static</span> <span class="type">void</span></span><br><span class="line"><span class="title function_">add_module</span> <span class="params">(<span class="type">char</span> *rp, <span class="type">const</span> <span class="type">char</span> *directory, <span class="type">size_t</span> dir_len, <span class="type">void</span> **modules,</span></span><br><span class="line"><span class="params">	    <span class="type">size_t</span> *nmodules, <span class="type">int</span> modcounter)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="comment">/* We expect now</span></span><br><span class="line"><span class="comment">     1. `from&#x27; name</span></span><br><span class="line"><span class="comment">     2. `to&#x27; name</span></span><br><span class="line"><span class="comment">     3. filename of the module</span></span><br><span class="line"><span class="comment">     4. an optional cost value</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">gconv_alias</span> <span class="title">fake_alias</span>;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">gconv_module</span> *<span class="title">new_module</span>;</span></span><br><span class="line">  <span class="type">char</span> *from, *to, *module, *wp;</span><br><span class="line">  <span class="type">int</span> need_ext;</span><br><span class="line">  <span class="type">int</span> cost_hi;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">while</span> (__isspace_l (*rp, _nl_C_locobj_ptr))</span><br><span class="line">    ++rp;</span><br><span class="line">  from = rp;</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">/* See whether we have already an alias with this name defined.  */</span></span><br><span class="line">  fake_alias.fromname = strndupa (from, to - from);</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>to - from作为strndupa的size实参</p>
+<p>而strndupa是使用了alloca实现的strndup，存在_libc_use_alloca保证安全的alloca调用，因此在to-from也就是，即conf 中 module name 极端长的情况下会程序会crash (SIGSEV)</p>
+<p>其实基本没利用价值</p>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/archives/">Home</a></li>
+        
+          <li><a href="/about/">About</a></li>
+        
+          <li><a href="/archives/">Writing</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="http://github.com/yushusu">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    
+    
+      <div id="toc-footer" style="display: none">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#GitHub-Security-Lab-CTF-1-SEGV-hunt"><span class="toc-number">1.</span> <span class="toc-text">GitHub Security Lab CTF 1: SEGV hunt</span></a></li></ol>
+      </div>
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://yushusu.github.io/2022/08/09/GitHub-Security-Lab-CTF-1-SEGV-hunt/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://yushusu.github.io/2022/08/09/GitHub-Security-Lab-CTF-1-SEGV-hunt/&text=GitHub Security Lab CTF 1: SEGV hunt"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://yushusu.github.io/2022/08/09/GitHub-Security-Lab-CTF-1-SEGV-hunt/&title=GitHub Security Lab CTF 1: SEGV hunt"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yushusu.github.io/2022/08/09/GitHub-Security-Lab-CTF-1-SEGV-hunt/&is_video=false&description=GitHub Security Lab CTF 1: SEGV hunt"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=GitHub Security Lab CTF 1: SEGV hunt&body=Check out this article: http://yushusu.github.io/2022/08/09/GitHub-Security-Lab-CTF-1-SEGV-hunt/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://yushusu.github.io/2022/08/09/GitHub-Security-Lab-CTF-1-SEGV-hunt/&title=GitHub Security Lab CTF 1: SEGV hunt"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://yushusu.github.io/2022/08/09/GitHub-Security-Lab-CTF-1-SEGV-hunt/&title=GitHub Security Lab CTF 1: SEGV hunt"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://yushusu.github.io/2022/08/09/GitHub-Security-Lab-CTF-1-SEGV-hunt/&title=GitHub Security Lab CTF 1: SEGV hunt"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://yushusu.github.io/2022/08/09/GitHub-Security-Lab-CTF-1-SEGV-hunt/&title=GitHub Security Lab CTF 1: SEGV hunt"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://yushusu.github.io/2022/08/09/GitHub-Security-Lab-CTF-1-SEGV-hunt/&name=GitHub Security Lab CTF 1: SEGV hunt&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://yushusu.github.io/2022/08/09/GitHub-Security-Lab-CTF-1-SEGV-hunt/&t=GitHub Security Lab CTF 1: SEGV hunt"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
+        
+          <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fa-solid fa-list fa-lg" aria-hidden="true"></i> TOC</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2016-2023
+    yushusu
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/archives/">Home</a></li><!--
+     --><!--
+       --><li><a href="/about/">About</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="http://github.com/yushusu">Projects</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"Copy to clipboard!\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "Copied!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>

@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="主动思考主动思考 主观能动性 不要被动接受代码可以慢慢过，最重要的是理解，实现举一反三 名词解释   Edges&#x2F;Branches&#x2F;Transitions ：边   Instrumentation *****：指我们可以实现可以提供模糊测试器对目标代码的覆盖率提供反馈数据的能力*，它可以复杂到像完全重构一个没有源代码的已经编译好的二进制程序，也可以简单到只是在每个基本块的入口地">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Program Analysis Note(NJU)">
+<meta property="og:url" content="http://yushusu.github.io/2022/03/09/Program-Analysis-Note-NJU/">
+<meta property="og:site_name" content="YUSHUSU">
+<meta property="og:description" content="主动思考主动思考 主观能动性 不要被动接受代码可以慢慢过，最重要的是理解，实现举一反三 名词解释   Edges&#x2F;Branches&#x2F;Transitions ：边   Instrumentation *****：指我们可以实现可以提供模糊测试器对目标代码的覆盖率提供反馈数据的能力*，它可以复杂到像完全重构一个没有源代码的已经编译好的二进制程序，也可以简单到只是在每个基本块的入口地">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://yushusu.github.io/2022/03/09/Program-Analysis-Note-NJU/Untitled.png">
+<meta property="og:image" content="http://yushusu.github.io/2022/03/09/Program-Analysis-Note-NJU/Untitled1.png">
+<meta property="og:image" content="http://yushusu.github.io/2022/03/09/Program-Analysis-Note-NJU/Untitled2.png">
+<meta property="og:image" content="http://yushusu.github.io/2022/03/09/Program-Analysis-Note-NJU/Untitled3.png">
+<meta property="article:published_time" content="2022-03-09T03:09:47.000Z">
+<meta property="article:modified_time" content="2023-07-09T03:20:08.667Z">
+<meta property="article:author" content="yushusu">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yushusu.github.io/2022/03/09/Program-Analysis-Note-NJU/Untitled.png">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>Program Analysis Note(NJU)</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/archives/">Home</a></li><!--
+     --><!--
+       --><li><a href="/about/">About</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="http://github.com/yushusu">Projects</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" aria-label="Previous post" href="/2022/05/09/Harness-Writing/"><i class="fa-solid fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" aria-label="Next post" href="/2021/06/29/heapnote/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="Back to top" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="Share post" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://yushusu.github.io/2022/03/09/Program-Analysis-Note-NJU/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://yushusu.github.io/2022/03/09/Program-Analysis-Note-NJU/&text=Program Analysis Note(NJU)"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://yushusu.github.io/2022/03/09/Program-Analysis-Note-NJU/&title=Program Analysis Note(NJU)"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yushusu.github.io/2022/03/09/Program-Analysis-Note-NJU/&is_video=false&description=Program Analysis Note(NJU)"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=Program Analysis Note(NJU)&body=Check out this article: http://yushusu.github.io/2022/03/09/Program-Analysis-Note-NJU/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://yushusu.github.io/2022/03/09/Program-Analysis-Note-NJU/&title=Program Analysis Note(NJU)"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://yushusu.github.io/2022/03/09/Program-Analysis-Note-NJU/&title=Program Analysis Note(NJU)"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://yushusu.github.io/2022/03/09/Program-Analysis-Note-NJU/&title=Program Analysis Note(NJU)"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://yushusu.github.io/2022/03/09/Program-Analysis-Note-NJU/&title=Program Analysis Note(NJU)"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://yushusu.github.io/2022/03/09/Program-Analysis-Note-NJU/&name=Program Analysis Note(NJU)&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://yushusu.github.io/2022/03/09/Program-Analysis-Note-NJU/&t=Program Analysis Note(NJU)"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    
+    
+      <div id="toc">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%BB%E5%8A%A8%E6%80%9D%E8%80%83%E4%B8%BB%E5%8A%A8%E6%80%9D%E8%80%83-%E4%B8%BB%E8%A7%82%E8%83%BD%E5%8A%A8%E6%80%A7-%E4%B8%8D%E8%A6%81%E8%A2%AB%E5%8A%A8%E6%8E%A5%E5%8F%97"><span class="toc-number">1.</span> <span class="toc-text">主动思考主动思考 主观能动性 不要被动接受</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81%E5%8F%AF%E4%BB%A5%E6%85%A2%E6%85%A2%E8%BF%87%EF%BC%8C%E6%9C%80%E9%87%8D%E8%A6%81%E7%9A%84%E6%98%AF%E7%90%86%E8%A7%A3%EF%BC%8C%E5%AE%9E%E7%8E%B0%E4%B8%BE%E4%B8%80%E5%8F%8D%E4%B8%89"><span class="toc-number">2.</span> <span class="toc-text">代码可以慢慢过，最重要的是理解，实现举一反三</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#java-x2F-soot-x2F-3AC-x2F-jimple"><span class="toc-number">3.</span> <span class="toc-text">java&#x2F;soot&#x2F;3AC&#x2F;jimple</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Static-Single-Assignment-SSA"><span class="toc-number">4.</span> <span class="toc-text">Static Single Assignment(SSA)</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Control-Flow-Analysis"><span class="toc-number">5.</span> <span class="toc-text">Control Flow Analysis</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Data-Flow-Analysis"><span class="toc-number">6.</span> <span class="toc-text">Data Flow Analysis</span></a></li></ol>
+      </div>
+    
+  </span>
+</div>
+
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        Program Analysis Note(NJU)
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">yushusu</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2022-03-09T03:09:47.000Z" class="dt-published" itemprop="datePublished">2022-03-09</time>
+        
+      
+    </div>
+
+
+      
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <h1 id="主动思考主动思考-主观能动性-不要被动接受"><a href="#主动思考主动思考-主观能动性-不要被动接受" class="headerlink" title="主动思考主动思考 主观能动性 不要被动接受"></a>主动思考主动思考 主观能动性 不要被动接受</h1><h1 id="代码可以慢慢过，最重要的是理解，实现举一反三"><a href="#代码可以慢慢过，最重要的是理解，实现举一反三" class="headerlink" title="代码可以慢慢过，最重要的是理解，实现举一反三"></a>代码可以慢慢过，最重要的是理解，实现举一反三</h1><ul>
+<li><p>名词解释</p>
+<p>  Edges&#x2F;Branches&#x2F;Transitions ：边</p>
+<p>  Instrumentation *****<em><strong>：指我们可以实现可以提供模糊测试器对目标代码的</strong>覆盖率提供反馈数据的能力</em>*，它可以复杂到像完全重构一个没有源代码的已经编译好的二进制程序，也可以简单到只是在每个基本块的入口地址上放置一个断点。</p>
+</li>
+</ul>
+<h1 id="java-x2F-soot-x2F-3AC-x2F-jimple"><a href="#java-x2F-soot-x2F-3AC-x2F-jimple" class="headerlink" title="java&#x2F;soot&#x2F;3AC&#x2F;jimple"></a><strong>java&#x2F;soot&#x2F;3AC&#x2F;jimple</strong></h1><p>invokespecial：可以用于调用constuctor构造函数，superclass method, private methods</p>
+<p>invokevirtual:instance methods call常用的实例方法调用(virtual dispatch派生&#x2F;派发)&#x2F;类似查虚表？</p>
+<p>invokeinterface:cannot optimization,checking interface implementation 接口是否实现</p>
+<p>invokestatic:call static methods</p>
+<p>invokedynamic:用于lambda表达式调用&#x2F;java is static typing&#x2F;dynamic language runs on jvm</p>
+<p>method signature : class name : return type method name(parameter1 type ,paramater2 type,…)</p>
+<p>public static void<clinit>这里是类的构造</clinit></p>
+<img src="/2022/03/09/Program-Analysis-Note-NJU/Untitled.png" class title="Untitled">
+
+<h1 id="Static-Single-Assignment-SSA"><a href="#Static-Single-Assignment-SSA" class="headerlink" title="Static Single Assignment(SSA)"></a><strong>Static Single Assignment(SSA)</strong></h1><p>静态单目赋值</p>
+<p>优点：flow-insensitive、Define-and-Use</p>
+<p>flow-sensitive :类似火车车厢，trash1-trash2-… &#x2F;考虑程序执行顺序&#x2F;更加精确</p>
+<p>flow-insensitive :混在一起&#x2F;indirectly incorporated&#x2F;更加快速</p>
+<ul>
+<li>conditional constant propagtion?</li>
+</ul>
+<p>缺点: too many varables and phi-functions..</p>
+<h1 id="Control-Flow-Analysis"><a href="#Control-Flow-Analysis" class="headerlink" title="Control Flow Analysis"></a>Control Flow Analysis</h1><p>将3AC转换成CFG（control flow graph&#x2F;a program）</p>
+<p>BB（Basic Blocks）&#x2F;statements&#x2F;nodes: maximal sequences of consecutive 3AC，只能有一个入口和出口 （从该块）</p>
+<ul>
+<li>find leader :第一条指令、有跳转的地方、跳转指令的下一条指令</li>
+<li>连接块直到下一个leader</li>
+</ul>
+<p>Edges&#x2F;control flow: add every BB ，take care of unconditional jump thing ，add entry and exit</p>
+<h1 id="Data-Flow-Analysis"><a href="#Data-Flow-Analysis" class="headerlink" title="Data Flow Analysis"></a>Data Flow Analysis</h1><p>for safety analysis:</p>
+<p>may analysis&#x2F;may true&#x2F;over-approximation&#x2F;不放过任何动态运行时可能的行为&#x2F;初始化为空 botton&#x2F;从小到大近似&#x2F;要求输出所有有机会满足要求的结果&#x2F;Union&#x2F;只要有一条路径即可</p>
+<p>must analysis&#x2F;must true&#x2F;under-approximation&#x2F;初始化为top all&#x2F;从大到小近似&#x2F;要求输出的结果必须是一定满足要求的但不要求输出所有的结果&#x2F;intersection交集</p>
+<p>data-flow value代表了每个可能的program states的抽象，研究一个为每个statement找到一个解决IN and OUT的约束规则</p>
+<p>*the meet operator ^ is used to summarize the contributions from different paths&#x2F;总结不同路径的贡献</p>
+<p>*the union operator U 指每条path都考虑到&#x2F;不应该放过任何一条path&#x2F;或&#x2F;集合并  </p>
+<p>*n is 交集&#x2F;并&#x2F;0交任何都是0</p>
+<p>Reaching Definitions:</p>
+<p>v的定义从q到p的路径上没有新定义出现&#x2F;may analysis&#x2F;</p>
+<img src="/2022/03/09/Program-Analysis-Note-NJU/Untitled1.png" class title="Untitled">
+
+<p>Transter Fuction: 公式 OUT &#x3D; IN</p>
+<p>Control Flow: IN &#x3D; U&#x2F;^ predecessor&#x2F;successor</p>
+<p>Algorithm of Reaching Definitions :</p>
+<p>why this iterative algorithm can finally stop?不动点&#x2F;monotonicity</p>
+<img src="/2022/03/09/Program-Analysis-Note-NJU/Untitled2.png" class title="Untitled">
+
+<p>Live Variables Analysis:</p>
+<p>backword</p>
+<p>Available Expressions Analysi s:</p>
+<img src="/2022/03/09/Program-Analysis-Note-NJU/Untitled3.png" class title="Untitled">
+
+<p>Partial Order 偏序集：</p>
+<p>Reflexivity自反性</p>
+<p>Antisymmetry反对性</p>
+<p>Transitivity传递性 </p>
+<p>View Iterative Algorithm in Another Way</p>
+<p> X &#x3D; F(X)    X是一个不动点</p>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/archives/">Home</a></li>
+        
+          <li><a href="/about/">About</a></li>
+        
+          <li><a href="/archives/">Writing</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="http://github.com/yushusu">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    
+    
+      <div id="toc-footer" style="display: none">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%BB%E5%8A%A8%E6%80%9D%E8%80%83%E4%B8%BB%E5%8A%A8%E6%80%9D%E8%80%83-%E4%B8%BB%E8%A7%82%E8%83%BD%E5%8A%A8%E6%80%A7-%E4%B8%8D%E8%A6%81%E8%A2%AB%E5%8A%A8%E6%8E%A5%E5%8F%97"><span class="toc-number">1.</span> <span class="toc-text">主动思考主动思考 主观能动性 不要被动接受</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81%E5%8F%AF%E4%BB%A5%E6%85%A2%E6%85%A2%E8%BF%87%EF%BC%8C%E6%9C%80%E9%87%8D%E8%A6%81%E7%9A%84%E6%98%AF%E7%90%86%E8%A7%A3%EF%BC%8C%E5%AE%9E%E7%8E%B0%E4%B8%BE%E4%B8%80%E5%8F%8D%E4%B8%89"><span class="toc-number">2.</span> <span class="toc-text">代码可以慢慢过，最重要的是理解，实现举一反三</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#java-x2F-soot-x2F-3AC-x2F-jimple"><span class="toc-number">3.</span> <span class="toc-text">java&#x2F;soot&#x2F;3AC&#x2F;jimple</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Static-Single-Assignment-SSA"><span class="toc-number">4.</span> <span class="toc-text">Static Single Assignment(SSA)</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Control-Flow-Analysis"><span class="toc-number">5.</span> <span class="toc-text">Control Flow Analysis</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Data-Flow-Analysis"><span class="toc-number">6.</span> <span class="toc-text">Data Flow Analysis</span></a></li></ol>
+      </div>
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://yushusu.github.io/2022/03/09/Program-Analysis-Note-NJU/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://yushusu.github.io/2022/03/09/Program-Analysis-Note-NJU/&text=Program Analysis Note(NJU)"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://yushusu.github.io/2022/03/09/Program-Analysis-Note-NJU/&title=Program Analysis Note(NJU)"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yushusu.github.io/2022/03/09/Program-Analysis-Note-NJU/&is_video=false&description=Program Analysis Note(NJU)"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=Program Analysis Note(NJU)&body=Check out this article: http://yushusu.github.io/2022/03/09/Program-Analysis-Note-NJU/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://yushusu.github.io/2022/03/09/Program-Analysis-Note-NJU/&title=Program Analysis Note(NJU)"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://yushusu.github.io/2022/03/09/Program-Analysis-Note-NJU/&title=Program Analysis Note(NJU)"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://yushusu.github.io/2022/03/09/Program-Analysis-Note-NJU/&title=Program Analysis Note(NJU)"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://yushusu.github.io/2022/03/09/Program-Analysis-Note-NJU/&title=Program Analysis Note(NJU)"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://yushusu.github.io/2022/03/09/Program-Analysis-Note-NJU/&name=Program Analysis Note(NJU)&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://yushusu.github.io/2022/03/09/Program-Analysis-Note-NJU/&t=Program Analysis Note(NJU)"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
+        
+          <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fa-solid fa-list fa-lg" aria-hidden="true"></i> TOC</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2016-2023
+    yushusu
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/archives/">Home</a></li><!--
+     --><!--
+       --><li><a href="/about/">About</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="http://github.com/yushusu">Projects</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"Copy to clipboard!\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "Copied!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>

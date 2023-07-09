@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="EXIF Fuzzer https:&#x2F;&#x2F;www.anquanke.com&#x2F;post&#x2F;id&#x2F;202982 1.编写解析exif 2.编写变异策略 3.寻找解析exif程序并编译使用 用Asan内存检测器观测内存信息 4.编写监控STUOUT STUERR段错误 5.编写crashes创建和保存变异模型 6.编译exifsan对每个引发崩溃的图像进行解析，记录崩溃地址，同时查看崩溃发生时是否存在读或写">
+<meta property="og:type" content="article">
+<meta property="og:title" content="A simple fuzzer">
+<meta property="og:url" content="http://yushusu.github.io/2022/07/09/A-simple-fuzzer/">
+<meta property="og:site_name" content="YUSHUSU">
+<meta property="og:description" content="EXIF Fuzzer https:&#x2F;&#x2F;www.anquanke.com&#x2F;post&#x2F;id&#x2F;202982 1.编写解析exif 2.编写变异策略 3.寻找解析exif程序并编译使用 用Asan内存检测器观测内存信息 4.编写监控STUOUT STUERR段错误 5.编写crashes创建和保存变异模型 6.编译exifsan对每个引发崩溃的图像进行解析，记录崩溃地址，同时查看崩溃发生时是否存在读或写">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://yushusu.github.io/2022/07/09/A-simple-fuzzer/Untitled.png">
+<meta property="og:image" content="http://yushusu.github.io/2022/07/09/A-simple-fuzzer/Untitled1.png">
+<meta property="article:published_time" content="2022-07-09T03:05:55.000Z">
+<meta property="article:modified_time" content="2023-07-09T03:15:46.678Z">
+<meta property="article:author" content="yushusu">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://yushusu.github.io/2022/07/09/A-simple-fuzzer/Untitled.png">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>A simple fuzzer</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/archives/">Home</a></li><!--
+     --><!--
+       --><li><a href="/about/">About</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="http://github.com/yushusu">Projects</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" aria-label="Previous post" href="/2023/06/29/Qiling-framwork-lab/"><i class="fa-solid fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" aria-label="Next post" href="/2022/07/08/CompilerNote/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="Back to top" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="Share post" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://yushusu.github.io/2022/07/09/A-simple-fuzzer/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://yushusu.github.io/2022/07/09/A-simple-fuzzer/&text=A simple fuzzer"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://yushusu.github.io/2022/07/09/A-simple-fuzzer/&title=A simple fuzzer"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yushusu.github.io/2022/07/09/A-simple-fuzzer/&is_video=false&description=A simple fuzzer"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=A simple fuzzer&body=Check out this article: http://yushusu.github.io/2022/07/09/A-simple-fuzzer/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://yushusu.github.io/2022/07/09/A-simple-fuzzer/&title=A simple fuzzer"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://yushusu.github.io/2022/07/09/A-simple-fuzzer/&title=A simple fuzzer"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://yushusu.github.io/2022/07/09/A-simple-fuzzer/&title=A simple fuzzer"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://yushusu.github.io/2022/07/09/A-simple-fuzzer/&title=A simple fuzzer"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://yushusu.github.io/2022/07/09/A-simple-fuzzer/&name=A simple fuzzer&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://yushusu.github.io/2022/07/09/A-simple-fuzzer/&t=A simple fuzzer"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    
+    
+  </span>
+</div>
+
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        A simple fuzzer
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">yushusu</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2022-07-09T03:05:55.000Z" class="dt-published" itemprop="datePublished">2022-07-09</time>
+        
+      
+    </div>
+
+
+      
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <p>EXIF Fuzzer</p>
+<p><a target="_blank" rel="noopener" href="https://www.anquanke.com/post/id/202982">https://www.anquanke.com/post/id/202982</a></p>
+<p>1.编写解析exif</p>
+<p>2.编写变异策略</p>
+<p>3.寻找解析exif程序并编译使用 用Asan内存检测器观测内存信息</p>
+<p>4.编写监控STUOUT STUERR段错误</p>
+<p>5.编写crashes创建和保存变异模型</p>
+<p>6.编译<code>exifsan</code>对每个引发崩溃的图像进行解析，记录崩溃地址，同时查看崩溃发生时是否存在读或写操作</p>
+<p><a target="_blank" rel="noopener" href="https://www.anquanke.com/post/id/202989">https://www.anquanke.com/post/id/202989</a></p>
+<p>7.性能优化：减少类型转换逻辑</p>
+<p>8.改c++</p>
+<p>9.对新的目标进行测试</p>
+<p><a target="_blank" rel="noopener" href="https://www.anquanke.com/post/id/207307#h2-4">https://www.anquanke.com/post/id/207307#h2-4</a></p>
+<p>10.覆盖率的重要性&#x2F;数学知识</p>
+<img src="/2022/07/09/A-simple-fuzzer/Untitled.png" class title="Untitled">
+
+<p><a target="_blank" rel="noopener" href="https://www.anquanke.com/post/id/234437#h2-3">https://www.anquanke.com/post/id/234437#h2-3</a></p>
+<ul>
+<li><p>拥有快照&#x2F;代码覆盖率指引的Fuzzer</p>
+<ol>
+<li>启动目标二进制文件，但在任何东西运行之前，在第一条指令时中断</li>
+<li>设置”开始“和”结束”位置上的断点（“开始”的位置是从磁盘上读取完毕文件后，“结束”的位置将是执行<code>exit()</code>后）</li>
+<li>运行程序，直到达到“开始”断点</li>
+<li>将进程的所有可写内存段收集到一个缓冲区中</li>
+<li>捕获所有寄存器状态</li>
+<li>将我们的模糊测试样例插入到内存堆中，覆盖程序从磁盘中读取的文件</li>
+<li>恢复执行目标二进制文件，直到达到“结束”断点</li>
+<li>将程序状态倒退到“开始”的位置</li>
+<li>从第6步开始重复</li>
+</ol>
+</li>
+<li><p>11.用Ptrace编写一个简单的调试器</p>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">pid_t</span> child_pid = fork();<span class="comment">//生成第二个进程</span></span><br><span class="line"><span class="keyword">if</span>(child_pid == <span class="number">0</span>)&#123;</span><br><span class="line">	execute_debuggee(debugee)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">long</span> ptrace_result = ptrace(PTRACE_TRACEME,<span class="number">0</span>,<span class="number">0</span>,<span class="number">0</span>);<span class="comment">//让父进程跟踪子进程</span></span><br><span class="line"><span class="keyword">if</span>(prtace_result == <span class="number">-1</span>)&#123;</span><br><span class="line">	<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>,<span class="string">&quot;\033[1;35mdragonfly&gt;\033[0m error (%d) during &quot;</span> ,errno);</span><br><span class="line">	perror(<span class="string">&quot;ptrace&quot;</span>);</span><br><span class="line">	<span class="built_in">exit</span>(errno);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> personality_result = personality(ADDR_NO_RANDOMIZE);</span><br><span class="line"><span class="comment">//因为确定一个断点地址，它是一个静态的值，我们无法在每个进程中都动态的更改这个值</span></span><br><span class="line"><span class="comment">//关闭ASLR使得每一个进程中的内存布局一致</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (personality_result == <span class="number">-1</span>) &#123;</span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;\033[1;35mdragonfly&gt;\033[0m error (%d) during &quot;</span>, errno);</span><br><span class="line">    perror(<span class="string">&quot;personality&quot;</span>);</span><br><span class="line">    <span class="built_in">exit</span>(errno);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//把stdout和stderr重定向流到/dev/null，以免混淆目标二进制文件的输出</span></span><br><span class="line"><span class="type">int</span> fd = open(<span class="string">&quot;/dev/null&quot;</span>, O_WRONLY);</span><br><span class="line">dup2(fd, <span class="number">1</span>);</span><br><span class="line">dup2(fd, <span class="number">2</span>);</span><br><span class="line">close(fd);</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> execl_result = execl(debugee,debugee,<span class="literal">NULL</span>);</span><br><span class="line"><span class="keyword">if</span>(execl_result == <span class="number">-1</span>)&#123;</span><br><span class="line">		<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;\033[1;35mdragonfly&gt;\033[0m error (%d) during &quot;</span>, errno);</span><br><span class="line">    perror(<span class="string">&quot;execl&quot;</span>);</span><br><span class="line">    <span class="built_in">exit</span>(errno);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//在插入断点之前获取地址上的一个字节的值</span></span><br><span class="line"><span class="type">long</span> <span class="type">long</span> <span class="type">unsigned</span> <span class="title function_">get_value</span><span class="params">(<span class="type">pid_t</span> child_pid , <span class="type">long</span> <span class="type">long</span> <span class="type">unsigned</span> address)</span>&#123;</span><br><span class="line">	errno = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">	<span class="type">long</span> <span class="type">long</span> <span class="type">unsigned</span> value = ptrace(PTRACE_PEEKTEXT , child_pid ,(<span class="type">void</span>*)address , <span class="number">0</span>);</span><br><span class="line"><span class="comment">//使用PTRACE_PEEKTEXT参数来读取位于子进程（child_pid）中的地址的值，该子进程是我们的目标进程</span></span><br><span class="line">	<span class="keyword">if</span> (value == <span class="number">-1</span> &amp;&amp; errno != <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;dragonfly&gt; Error (%d) during &quot;</span>, errno);</span><br><span class="line">        perror(<span class="string">&quot;ptrace&quot;</span>);</span><br><span class="line">        <span class="built_in">exit</span>(errno);</span><br><span class="line">    &#125;</span><br><span class="line">	<span class="keyword">return</span> value;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//插入断点</span></span><br><span class="line"><span class="type">void</span> <span class="title function_">set_breakpoint</span><span class="params">(<span class="type">long</span> <span class="type">long</span> <span class="type">unsigned</span> bp_address, <span class="type">long</span> <span class="type">long</span> <span class="type">unsigned</span> original_value, <span class="type">pid_t</span> child_pid)</span> &#123;</span><br><span class="line"></span><br><span class="line">    errno = <span class="number">0</span>;</span><br><span class="line"><span class="comment">//我们获取那一个字节的值，我们将在地址处提取64比特长度的值，但只关心最右字节的值</span></span><br><span class="line"><span class="comment">//将取前面函数收集到的原始值，并执行两个按位操作以保持前7个字节不变，</span></span><br><span class="line"><span class="comment">//然后将最后一个字节替换为\xCC</span></span><br><span class="line">    <span class="type">long</span> <span class="type">long</span> <span class="type">unsigned</span> breakpoint = (original_value &amp; <span class="number">0xFFFFFFFFFFFFFF00</span> | <span class="number">0xCC</span>);</span><br><span class="line">    <span class="type">int</span> ptrace_result = ptrace(PTRACE_POKETEXT, child_pid, (<span class="type">void</span>*)bp_address, (<span class="type">void</span>*)breakpoint);</span><br><span class="line">    <span class="keyword">if</span> (ptrace_result == <span class="number">-1</span> &amp;&amp; errno != <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;dragonfly&gt; Error (%d) during &quot;</span>, errno);</span><br><span class="line">        perror(<span class="string">&quot;ptrace&quot;</span>);</span><br><span class="line">        <span class="built_in">exit</span>(errno);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//删除断点</span></span><br><span class="line"><span class="type">void</span> <span class="title function_">revert_breakpoint</span><span class="params">(<span class="type">long</span> <span class="type">long</span> <span class="type">unsigned</span> bp_address,<span class="type">long</span> <span class="type">long</span> <span class="type">unsigned</span> original_value ,<span class="type">pid_t</span> child_pid)</span></span><br><span class="line">&#123;</span><br><span class="line">	errno = <span class="number">0</span>;</span><br><span class="line">	<span class="type">int</span> ptarce_result = ptrace(PTRACE_POKETEXT , child_pid ,(<span class="type">void</span>*)bp_address , (<span class="type">void</span>*)original_value);</span><br><span class="line">	<span class="keyword">if</span> (ptrace_result == <span class="number">-1</span> &amp;&amp; errno != <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;dragonfly&gt; Error (%d) during &quot;</span>, errno);</span><br><span class="line">        perror(<span class="string">&quot;ptrace&quot;</span>);</span><br><span class="line">        <span class="built_in">exit</span>(errno);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//如果我们在地址0x000000000000000命中一个断点，rip实际上将在0x0000000000000001。</span></span><br><span class="line"><span class="comment">//因此，在将被覆盖的指令恢复到之前的值之后，我们还需要在恢复执行之前从rip中减去1</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>12.使用ptrace创建寄存器状态快照</p>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//取回寄存器状态</span></span><br><span class="line"><span class="keyword">struct</span> user_regs_struct <span class="title function_">get_regs</span><span class="params">(<span class="type">pid_t</span> child_pid , <span class="keyword">struct</span> user_regs_struct registers)</span>&#123;</span><br><span class="line"><span class="comment">//ptrace能够捕获和设置被调试进程中的寄存器状态	</span></span><br><span class="line">	<span class="type">int</span> ptrace_result = ptrace(PTRACE_GETREGS , child_pid , <span class="number">0</span> ,&amp;registers);</span><br><span class="line">	<span class="keyword">if</span> (ptrace_result == <span class="number">-1</span>) &#123;</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;dragonfly&gt; Error (%d) during &quot;</span>, errno); </span><br><span class="line">        perror(<span class="string">&quot;ptrace&quot;</span>);</span><br><span class="line">        <span class="built_in">exit</span>(errno);      </span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> registers;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//设置寄存器的值</span></span><br><span class="line"><span class="type">void</span> <span class="title function_">set_reg</span><span class="params">(<span class="type">pid_t</span> child_pid,<span class="keyword">struct</span> user_regs_struct registers)</span>&#123;</span><br><span class="line">	<span class="type">int</span> ptrace_result = ptrace(PTRACE_SETREGS , child_pid , <span class="number">0</span> , &amp;registers);</span><br><span class="line">	<span class="keyword">if</span> (ptrace_result == <span class="number">-1</span>) &#123;</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;dragonfly&gt; Error (%d) during &quot;</span>, errno);</span><br><span class="line">        perror(<span class="string">&quot;ptrace&quot;</span>);</span><br><span class="line">        <span class="built_in">exit</span>(errno);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>13.使用&#x2F;proc创建可写内存段状态快照</p>
+<p>  <code>cat /proc/$pid/maps</code>以查看内存是如何在进程中映射的，<code>|grep rw</code><br>  筛选出可以读写的内存区段（即可以使用我们的模糊测试样例覆盖的地方)</p>
+<p>  然后打开<code>/proc/$pid/mem</code>并从这些偏移量中读取缓冲区以存储可写内存</p>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//该文件包含一些用于捕获快照和恢复快照的定义和函数</span></span><br><span class="line"><span class="type">unsigned</span> <span class="type">char</span>* <span class="title function_">create_snapshot</span><span class="params">(<span class="type">pid_t</span> child_pid)</span>&#123;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">SNAPSHOT_MEMORY</span> <span class="title">read_memory</span> =</span> &#123;</span><br><span class="line">		<span class="comment">// cat /proc/$pid/maps读取出来的maps_offset </span></span><br><span class="line">            <span class="number">0x555555756000</span>,</span><br><span class="line">            <span class="number">0x7ffff7dcf000</span>,</span><br><span class="line">            <span class="number">0x7ffff7dd1000</span>,</span><br><span class="line">            <span class="number">0x7ffff7fe0000</span>,</span><br><span class="line">            <span class="number">0x7ffff7ffd000</span>,</span><br><span class="line">            <span class="number">0x7ffff7ffe000</span>,</span><br><span class="line">            <span class="number">0x7ffffffde000</span></span><br><span class="line"></span><br><span class="line">	&#125;,&#123;</span><br><span class="line">			<span class="comment">// /proc/$pid/mem读取的snapshot_buf_offset</span></span><br><span class="line">						<span class="number">0x0</span>,</span><br><span class="line">            <span class="number">0xFFF</span>,</span><br><span class="line">            <span class="number">0x2FFF</span>,</span><br><span class="line">            <span class="number">0x6FFF</span>,</span><br><span class="line">            <span class="number">0x8FFF</span>,</span><br><span class="line">            <span class="number">0x9FFF</span>,</span><br><span class="line">            <span class="number">0xAFFF</span></span><br><span class="line"></span><br><span class="line">	&#125;,&#123;</span><br><span class="line">            <span class="comment">// 各节的长度 rdwr length</span></span><br><span class="line">            <span class="number">0x1000</span>,</span><br><span class="line">            <span class="number">0x2000</span>,</span><br><span class="line">            <span class="number">0x4000</span>,</span><br><span class="line">            <span class="number">0x2000</span>,</span><br><span class="line">            <span class="number">0x1000</span>,</span><br><span class="line">            <span class="number">0x1000</span>,</span><br><span class="line">            <span class="number">0x21000</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">	<span class="type">unsigned</span> <span class="type">char</span>* snapshot_buf  = (<span class="type">unsigned</span> <span class="type">char</span>*)<span class="built_in">malloc</span>(<span class="number">0x2C000</span>);</span><br><span class="line">	<span class="type">char</span> proc_mem[<span class="number">0x20</span>] = &#123; <span class="number">0</span> &#125;;</span><br><span class="line">	<span class="built_in">sprintf</span>(proc_mem,<span class="string">&quot;/proc/%d/mem&quot;</span>,child_pid);</span><br><span class="line">	<span class="comment">//打开/proc/%d/mem的可读权限</span></span><br><span class="line">	<span class="type">int</span> mem_fd = open(proc_mem , O_RDONLY);</span><br><span class="line">	<span class="keyword">if</span> (mem_fd == <span class="number">-1</span>) &#123;</span><br><span class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;dragonfly&gt; Error (%d) during &quot;</span>, errno);</span><br><span class="line">        perror(<span class="string">&quot;open&quot;</span>);</span><br><span class="line">        <span class="built_in">exit</span>(errno);</span><br><span class="line">    &#125;</span><br><span class="line">	<span class="type">int</span> lseek_result , bytes_read;</span><br><span class="line">	<span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span> ; i &lt; <span class="number">7</span> ; i++)&#123;</span><br><span class="line">	<span class="comment">//循环这7个偏移量和长度，并把它们都写进一个名为snapshot_buf的缓冲区，</span></span><br><span class="line">	<span class="comment">//它将存储在我们的模糊测试器的内存堆中</span></span><br><span class="line">	lssek_result = lseek(mem_fd , read_memory.maps_offset[i] , SEEK_SET);</span><br><span class="line">	<span class="keyword">if</span> (lseek_result == <span class="number">-1</span>) &#123;</span><br><span class="line">            <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;dragonfly&gt; Error (%d) during &quot;</span>, errno);</span><br><span class="line">            perror(<span class="string">&quot;lseek&quot;</span>);</span><br><span class="line">            <span class="built_in">exit</span>(errno);</span><br><span class="line">        &#125;</span><br><span class="line">	bytes_read = read(mem_fd , (<span class="type">unsigned</span> <span class="type">char</span>*)(snapshot_buf + </span><br><span class="line">	read_memory.snapshot_buf_offset[i]),read_memory.rdwr_length[i]);</span><br><span class="line"></span><br><span class="line">	<span class="keyword">if</span> (bytes_read == <span class="number">-1</span>) &#123;</span><br><span class="line">            <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">&quot;dragonfly&gt; Error (%d) during &quot;</span>, errno);</span><br><span class="line">            perror(<span class="string">&quot;read&quot;</span>);</span><br><span class="line">            <span class="built_in">exit</span>(errno);</span><br><span class="line">			  &#125;</span><br><span class="line">	&#125;</span><br><span class="line">	close(mem_fd);</span><br><span class="line">	<span class="keyword">return</span> snapshot_buf;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>  所以现在我们有了进程从<code>check_one</code>开始时的寄存器状态和内存状态。（我们的<code>start</code><br>  断点）</p>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//创建恢复快照</span></span><br><span class="line"><span class="type">void</span> <span class="title function_">restore_snapshot</span><span class="params">(<span class="type">unsigned</span> <span class="type">char</span>* snapshot_buf ,<span class="type">pid_t</span> child_pid)</span>&#123;</span><br><span class="line">	<span class="type">ssize_t</span> bytes_written = <span class="number">0</span> ;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//读出snapshot_buf里的7的不同的偏移</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">iovec</span> <span class="title">local</span>[7];</span></span><br><span class="line">	<span class="comment">//写入snapshot_buf里的7的不同的偏移</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">iovec</span> <span class="title">remote</span>[7];</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//将从我们在snapshot_buf中保存的原始快照数据按照规定的偏移量覆写到进程的/proc/$pid/maps</span></span><br><span class="line">		<span class="comment">//将之前从proc/$pid/mem读的所有非堆区的可写内存放进local</span></span><br><span class="line">		local[<span class="number">0</span>].iov_base = snapshot_buf;</span><br><span class="line">    local[<span class="number">0</span>].iov_len = <span class="number">0x1000</span>;</span><br><span class="line">    local[<span class="number">1</span>].iov_base = (<span class="type">unsigned</span> <span class="type">char</span>*)(snapshot_buf + <span class="number">0xFFF</span>);</span><br><span class="line">    local[<span class="number">1</span>].iov_len = <span class="number">0x2000</span>;</span><br><span class="line">    local[<span class="number">2</span>].iov_base = (<span class="type">unsigned</span> <span class="type">char</span>*)(snapshot_buf + <span class="number">0x2FFF</span>);</span><br><span class="line">    local[<span class="number">2</span>].iov_len = <span class="number">0x4000</span>;</span><br><span class="line">    local[<span class="number">3</span>].iov_base = (<span class="type">unsigned</span> <span class="type">char</span>*)(snapshot_buf + <span class="number">0x6FFF</span>);</span><br><span class="line">    local[<span class="number">3</span>].iov_len = <span class="number">0x2000</span>;</span><br><span class="line">    local[<span class="number">4</span>].iov_base = (<span class="type">unsigned</span> <span class="type">char</span>*)(snapshot_buf + <span class="number">0x8FFF</span>);</span><br><span class="line">    local[<span class="number">4</span>].iov_len = <span class="number">0x1000</span>;</span><br><span class="line">    local[<span class="number">5</span>].iov_base = (<span class="type">unsigned</span> <span class="type">char</span>*)(snapshot_buf + <span class="number">0x9FFF</span>);</span><br><span class="line">    local[<span class="number">5</span>].iov_len = <span class="number">0x1000</span>;</span><br><span class="line">    local[<span class="number">6</span>].iov_base = (<span class="type">unsigned</span> <span class="type">char</span>*)(snapshot_buf + <span class="number">0xAFFF</span>);</span><br><span class="line">    local[<span class="number">6</span>].iov_len = <span class="number">0x21000</span>;</span><br><span class="line"></span><br><span class="line">		<span class="comment">//硬编码从/proc/pid/maps手收集的可写内存地址和长度</span></span><br><span class="line">    remote[<span class="number">0</span>].iov_base = (<span class="type">void</span>*)<span class="number">0x555555756000</span>;</span><br><span class="line">    remote[<span class="number">0</span>].iov_len = <span class="number">0x1000</span>;</span><br><span class="line">    remote[<span class="number">1</span>].iov_base = (<span class="type">void</span>*)<span class="number">0x7ffff7dcf000</span>;</span><br><span class="line">    remote[<span class="number">1</span>].iov_len = <span class="number">0x2000</span>;</span><br><span class="line">    remote[<span class="number">2</span>].iov_base = (<span class="type">void</span>*)<span class="number">0x7ffff7dd1000</span>;</span><br><span class="line">    remote[<span class="number">2</span>].iov_len = <span class="number">0x4000</span>;</span><br><span class="line">    remote[<span class="number">3</span>].iov_base = (<span class="type">void</span>*)<span class="number">0x7ffff7fe0000</span>;</span><br><span class="line">    remote[<span class="number">3</span>].iov_len = <span class="number">0x2000</span>;</span><br><span class="line">    remote[<span class="number">4</span>].iov_base = (<span class="type">void</span>*)<span class="number">0x7ffff7ffd000</span>;</span><br><span class="line">    remote[<span class="number">4</span>].iov_len = <span class="number">0x1000</span>;</span><br><span class="line">    remote[<span class="number">5</span>].iov_base = (<span class="type">void</span>*)<span class="number">0x7ffff7ffe000</span>;</span><br><span class="line">    remote[<span class="number">5</span>].iov_len = <span class="number">0x1000</span>;</span><br><span class="line">    remote[<span class="number">6</span>].iov_base = (<span class="type">void</span>*)<span class="number">0x7ffffffde000</span>;</span><br><span class="line">    remote[<span class="number">6</span>].iov_len = <span class="number">0x21000</span>;</span><br><span class="line"></span><br><span class="line">		bytes_written = process_vm_writev(child_pid, local, <span class="number">7</span>, remote, <span class="number">7</span>, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//ptrace_helpers函数里恢复一下寄存器</span></span><br><span class="line"><span class="comment">// restore writable memory from /proc/$pid/maps to its state at Start</span></span><br><span class="line">restore_snapshot(snapshot_buf, child_pid);</span><br><span class="line"></span><br><span class="line"><span class="comment">// restore registers to their state at Start</span></span><br><span class="line">set_regs(child_pid, snapshot_registers);</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>14.编写代码覆盖率反馈机制</p>
+<p>  在从<code>check_two</code>到<code>check_three</code>的入口点放置“动态”（用来统计代码覆盖率的）断点。当到达一个“动态”断点时，我们将到达代码的输入保存到一个名为<code>corpus</code>的<code>char</code>指针数组中，现在我们可以开始对那些保存到<code>corpus</code>的输入作为种子进行变异，不仅仅是对我们的“原型”<code>Canon_40D.jpg</code>输入进行变异。具体如下：</p>
+<ol>
+<li>用<strong>原始数据</strong>作为种子进行变异作为测试样例插入<strong>内存堆</strong>中</li>
+<li>恢复被测试进程继续运行</li>
+<li>如果触发“动态”断点，则将输入保存到<strong>语料库</strong>中</li>
+<li>如果语料库中保存的语料数量大于1，则下一次生成测试样例将从原始数据和语料库中随机选择一个作为变异种子，然后从步骤1开始重复</li>
+</ol>
+<ul>
+<li><p>跟踪基本块</p>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//输入一个unsigned char 的buff</span></span><br><span class="line"><span class="keyword">if</span> (input[<span class="number">0x9</span>] &lt; <span class="number">220</span>)&#123;</span><br><span class="line">		parsing_routine_1(input);</span><br><span class="line">&#125;<span class="keyword">else</span>&#123;</span><br><span class="line">		parsing_routine_2(input);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>  假如输入200的时候，将进入parsing_routine_1，我们删除parsing_routine_1入口处的断点，并将到达它的输入添加到语料库中；<strong>但输入220时，会进入到parsing_routine_2，而且进入到parsing_routine_2的值将永远是220，</strong>因为我们删除了这个断点，我们将不会把其他能触发到这个断点的值保存到语料库中。解决办法是定期重新实例化所有断点</p>
+</li>
+<li><p>跟踪边缘和路径</p>
+<p>  AFL++对于覆盖率统计数据的展示同时引用了基于基本块和基于边缘的隐式计数器。</p>
+  <img src="/2022/07/09/A-simple-fuzzer/Untitled1.png" class title="Untitled">
+<p>  为了跟踪边缘信息，AFL使用了一个元组来保存有关系的基本块地址。例如如果没有提供正确数量的命令行参数而从块<code>0x001006cf</code>转到块<code>0x001006e4</code>那么这个元组<code>(0x001006cf, 0x001006e4)</code>将被添加到AFL++中用于跟踪边缘路径信息的元组映射中。让我们跟踪一下在程序中遍历整个路径时要注册的元组：0x001006cf -&gt; 0x00100706 -&gt; 0x00100722，如果采用上述路径，我们可以制定覆盖率数据的两个元组：（<code>0x001006cf</code>，<code>0x00100706</code>）和（<code>0x00100706</code>，<code>0x00100722</code>），可以在AFL的覆盖率数据中查找是否探索过这些元组，此外还跟踪探索每条边到达和探索的频率，AFL通过在编译目标时插桩来获取这些数据，也就是如果你用AFL编译目标代码，AFL将在其中嵌入一些汇编代码。</p>
+<p>  AFL针对二进制数据的目标主要通过QEMU来收集类似的覆盖率数据，当块被JIT(运行时)到本机代码并存储在缓存中，以便之后的执行用到，所以QEMU运行到一个基本块时，它可以检查这个块是否已经编译过，AFL就可以利用这个缓存来跟踪正在执行的块，并获得与源代码插桩编译模式相似的数据。QEMU将预先计算找出直接跳转一些列的基本块并将它们编译成一个完整的块以加快处理速度，QEMU中称为“基本块链”。</p>
+</li>
+<li><p>比较覆盖率&#x2F;细粒度比较</p>
+</li>
+</ul>
+<p>  改进：</p>
+<ul>
+<li>通过重构代码，更改全局变量的位置来优化性能</li>
+<li>可以通过Python脚本创建配置文件来使得模糊测试器拥有动态配置的功能</li>
+<li>采用更多的变异方法</li>
+<li>采用更多的代码覆盖机制</li>
+<li>开发可并行化运行实例的模糊测试器，使得多个并行化实例副本共享发现的输入&#x2F;覆盖数据</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/archives/">Home</a></li>
+        
+          <li><a href="/about/">About</a></li>
+        
+          <li><a href="/archives/">Writing</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="http://github.com/yushusu">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://yushusu.github.io/2022/07/09/A-simple-fuzzer/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://yushusu.github.io/2022/07/09/A-simple-fuzzer/&text=A simple fuzzer"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://yushusu.github.io/2022/07/09/A-simple-fuzzer/&title=A simple fuzzer"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yushusu.github.io/2022/07/09/A-simple-fuzzer/&is_video=false&description=A simple fuzzer"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=A simple fuzzer&body=Check out this article: http://yushusu.github.io/2022/07/09/A-simple-fuzzer/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://yushusu.github.io/2022/07/09/A-simple-fuzzer/&title=A simple fuzzer"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://yushusu.github.io/2022/07/09/A-simple-fuzzer/&title=A simple fuzzer"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://yushusu.github.io/2022/07/09/A-simple-fuzzer/&title=A simple fuzzer"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://yushusu.github.io/2022/07/09/A-simple-fuzzer/&title=A simple fuzzer"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://yushusu.github.io/2022/07/09/A-simple-fuzzer/&name=A simple fuzzer&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://yushusu.github.io/2022/07/09/A-simple-fuzzer/&t=A simple fuzzer"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2016-2023
+    yushusu
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/archives/">Home</a></li><!--
+     --><!--
+       --><li><a href="/about/">About</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="http://github.com/yushusu">Projects</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"Copy to clipboard!\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "Copied!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>

@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="静态反调试技术：许多反调试对OS有较强的依赖性。 利用PEB结构体的一些信息可以判断反调试。 PEB结构体中与反调试密切相关的成员：BeingDebugged（一个标志，表示进程是否处于被调试状态） NtGlobalFlag(与被调试进程堆栈有关) BeingDebugged：进程处于被调试状态时，BeingDebugged（+0x2）的值被设置为1，未调试状态则为0； 可以通过IsDebugge">
+<meta property="og:type" content="article">
+<meta property="og:title" content="anti-debugging(windows)">
+<meta property="og:url" content="http://yushusu.github.io/2020/07/09/anti-debugging-windows/">
+<meta property="og:site_name" content="YUSHUSU">
+<meta property="og:description" content="静态反调试技术：许多反调试对OS有较强的依赖性。 利用PEB结构体的一些信息可以判断反调试。 PEB结构体中与反调试密切相关的成员：BeingDebugged（一个标志，表示进程是否处于被调试状态） NtGlobalFlag(与被调试进程堆栈有关) BeingDebugged：进程处于被调试状态时，BeingDebugged（+0x2）的值被设置为1，未调试状态则为0； 可以通过IsDebugge">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2020-07-09T02:56:40.000Z">
+<meta property="article:modified_time" content="2023-07-09T02:57:51.183Z">
+<meta property="article:author" content="yushusu">
+<meta name="twitter:card" content="summary">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>anti-debugging(windows)</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/archives/">Home</a></li><!--
+     --><!--
+       --><li><a href="/about/">About</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="http://github.com/yushusu">Projects</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" aria-label="Previous post" href="/2021/06/29/heapnote/"><i class="fa-solid fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" aria-label="Next post" href="/2020/07/08/conf2020-mykvm/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="Back to top" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="Share post" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://yushusu.github.io/2020/07/09/anti-debugging-windows/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://yushusu.github.io/2020/07/09/anti-debugging-windows/&text=anti-debugging(windows)"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://yushusu.github.io/2020/07/09/anti-debugging-windows/&title=anti-debugging(windows)"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yushusu.github.io/2020/07/09/anti-debugging-windows/&is_video=false&description=anti-debugging(windows)"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=anti-debugging(windows)&body=Check out this article: http://yushusu.github.io/2020/07/09/anti-debugging-windows/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://yushusu.github.io/2020/07/09/anti-debugging-windows/&title=anti-debugging(windows)"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://yushusu.github.io/2020/07/09/anti-debugging-windows/&title=anti-debugging(windows)"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://yushusu.github.io/2020/07/09/anti-debugging-windows/&title=anti-debugging(windows)"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://yushusu.github.io/2020/07/09/anti-debugging-windows/&title=anti-debugging(windows)"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://yushusu.github.io/2020/07/09/anti-debugging-windows/&name=anti-debugging(windows)&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://yushusu.github.io/2020/07/09/anti-debugging-windows/&t=anti-debugging(windows)"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    
+    
+      <div id="toc">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%9D%99%E6%80%81%E5%8F%8D%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF%EF%BC%9A"><span class="toc-number">1.</span> <span class="toc-text">静态反调试技术：</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#PEB%E7%BB%93%E6%9E%84%E4%BD%93%E4%B8%AD%E4%B8%8E%E5%8F%8D%E8%B0%83%E8%AF%95%E5%AF%86%E5%88%87%E7%9B%B8%E5%85%B3%E7%9A%84%E6%88%90%E5%91%98%EF%BC%9A"><span class="toc-number">1.1.</span> <span class="toc-text">PEB结构体中与反调试密切相关的成员：</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#BeingDebugged%EF%BC%9A"><span class="toc-number">1.1.1.</span> <span class="toc-text">BeingDebugged：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A0%B4%E8%A7%A3%E4%B9%8B%E6%B3%95%EF%BC%9A"><span class="toc-number">1.1.2.</span> <span class="toc-text">破解之法：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#NtGlobalFlag"><span class="toc-number">1.1.3.</span> <span class="toc-text">NtGlobalFlag:</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A0%B4%E8%A7%A3%E4%B9%8B%E6%B3%95%EF%BC%9A-1"><span class="toc-number">1.1.4.</span> <span class="toc-text">破解之法：</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#NtQueryInformationProcess"><span class="toc-number">1.2.</span> <span class="toc-text">NtQueryInformationProcess():</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ProcessDebugPort%EF%BC%88-0x7%EF%BC%89%EF%BC%9A"><span class="toc-number">1.2.1.</span> <span class="toc-text">ProcessDebugPort（+0x7）：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#CheckRemoteDebuggerPresent"><span class="toc-number">1.2.2.</span> <span class="toc-text">CheckRemoteDebuggerPresent():</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ProcessDebugObjectHandle-0x1E"><span class="toc-number">1.2.3.</span> <span class="toc-text">ProcessDebugObjectHandle(+0x1E):</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ProcessDebugFlags%EF%BC%88-0x1F%EF%BC%89%EF%BC%9A"><span class="toc-number">1.2.4.</span> <span class="toc-text">ProcessDebugFlags（+0x1F）：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A0%B4%E8%A7%A3%E4%B9%8B%E6%B3%95%EF%BC%9A-2"><span class="toc-number">1.2.5.</span> <span class="toc-text">破解之法：</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#NtQuerySystemInformation%EF%BC%88%EF%BC%89%EF%BC%9A"><span class="toc-number">1.3.</span> <span class="toc-text">NtQuerySystemInformation（）：</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#SystemKernelDebuggerInformation%EF%BC%880x23%EF%BC%89%EF%BC%9A"><span class="toc-number">1.3.1.</span> <span class="toc-text">SystemKernelDebuggerInformation（0x23）：</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#NtQueryObject-%EF%BC%9A"><span class="toc-number">1.4.</span> <span class="toc-text">NtQueryObject()：</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#NtQueryObject-%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95%EF%BC%9A"><span class="toc-number">1.4.1.</span> <span class="toc-text">NtQueryObject()使用方法：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E8%8E%B7%E5%8F%96%E5%86%85%E6%A0%B8%E5%AF%B9%E8%B1%A1%E4%BF%A1%E6%81%AF%E9%93%BE%E8%A1%A8%EF%BC%9A"><span class="toc-number">1.4.2.</span> <span class="toc-text">1.获取内核对象信息链表：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E5%88%86%E9%85%8D%E5%86%85%E5%AD%98%EF%BC%9A"><span class="toc-number">1.4.3.</span> <span class="toc-text">2.分配内存：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E8%8E%B7%E5%8F%96%E5%86%85%E6%A0%B8%E5%AF%B9%E8%B1%A1%E4%BF%A1%E6%81%AF%E9%93%BE%E8%A1%A8"><span class="toc-number">1.4.4.</span> <span class="toc-text">3.获取内核对象信息链表:</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E7%A1%AE%E5%AE%9A%E2%80%9D%E8%B0%83%E8%AF%95%E5%AF%B9%E8%B1%A1%E2%80%9C%E5%AF%B9%E8%B1%A1%E7%B1%BB%E5%9E%8B%E3%80%82"><span class="toc-number">1.4.5.</span> <span class="toc-text">4.确定”调试对象“对象类型。</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A0%B4%E8%A7%A3%E4%B9%8B%E6%B3%95%EF%BC%9A-3"><span class="toc-number">1.4.6.</span> <span class="toc-text">破解之法：</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ZwSetInformationThread"><span class="toc-number">1.5.</span> <span class="toc-text">ZwSetInformationThread():</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A0%B4%E8%A7%A3%E4%B9%8B%E6%B3%95%EF%BC%9A-4"><span class="toc-number">1.5.1.</span> <span class="toc-text">破解之法：</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ETC"><span class="toc-number">1.6.</span> <span class="toc-text">ETC</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E5%8F%8D%E8%B0%83%E8%AF%95%EF%BC%9A"><span class="toc-number">2.</span> <span class="toc-text">动态反调试：</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%82%E5%B8%B8%EF%BC%9A"><span class="toc-number">2.1.</span> <span class="toc-text">异常：</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#SEH"><span class="toc-number">2.1.1.</span> <span class="toc-text">SEH:</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#EXCEPTION-BREAKPOINT"><span class="toc-number">2.1.2.</span> <span class="toc-text">EXCEPTION_BREAKPOINT:</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SetUnhandledExceptionFilter"><span class="toc-number">2.1.3.</span> <span class="toc-text">SetUnhandledExceptionFilter():</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A0%B4%E8%A7%A3%E4%B9%8B%E6%B3%95%EF%BC%9A-5"><span class="toc-number">2.1.4.</span> <span class="toc-text">破解之法：</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Timing-Cheak%EF%BC%9A"><span class="toc-number">2.2.</span> <span class="toc-text">Timing Cheak：</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%97%B6%E9%97%B4%E9%97%B4%E9%9A%94%E6%A3%80%E6%B5%8B%E6%B3%95%EF%BC%9A"><span class="toc-number">2.2.1.</span> <span class="toc-text">时间间隔检测法：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%88%A9%E7%94%A8CPU%E8%AE%A1%E6%95%B0%E5%99%A8%EF%BC%9A"><span class="toc-number">2.2.2.</span> <span class="toc-text">1.利用CPU计数器：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E5%88%A9%E7%94%A8%E7%B3%BB%E7%BB%9F%E5%AE%9E%E9%99%85%E6%97%B6%E9%97%B4%EF%BC%9A"><span class="toc-number">2.2.3.</span> <span class="toc-text">2.利用系统实际时间：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%A1%E6%95%B0%E5%99%A8%E5%87%86%E7%A1%AE%E5%BA%A6%EF%BC%9A"><span class="toc-number">2.2.4.</span> <span class="toc-text">计数器准确度：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#RDTSC"><span class="toc-number">2.2.5.</span> <span class="toc-text">RDTSC:</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A0%B4%E8%A7%A3%E4%B9%8B%E6%B3%95"><span class="toc-number">2.2.6.</span> <span class="toc-text">破解之法:</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%99%B7%E9%98%B1%E6%A0%87%E5%BF%97"><span class="toc-number">2.3.</span> <span class="toc-text">陷阱标志:</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%95%E6%AD%A5%E6%89%A7%E8%A1%8C"><span class="toc-number">2.3.1.</span> <span class="toc-text">单步执行:</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A0%B4%E8%A7%A3%E4%B9%8B%E6%B3%95-1"><span class="toc-number">2.3.2.</span> <span class="toc-text">破解之法:</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#INT-2D"><span class="toc-number">2.3.3.</span> <span class="toc-text">INT 2D:</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BF%BD%E7%95%A5%E4%B8%8B%E6%9D%A1%E6%8C%87%E4%BB%A4%E7%9A%84%E7%AC%AC%E4%B8%80%E4%B8%AA%E5%AD%97%E8%8A%82"><span class="toc-number">2.3.4.</span> <span class="toc-text">忽略下条指令的第一个字节:</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E7%9B%B4%E8%BF%90%E8%A1%8C%E5%88%B0%E6%96%AD%E7%82%B9%E5%A4%84"><span class="toc-number">2.3.5.</span> <span class="toc-text">一直运行到断点处:</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0xCC%E6%8E%A2%E6%B5%8B"><span class="toc-number">2.4.</span> <span class="toc-text">0xCC探测:</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#API%E6%96%AD%E7%82%B9"><span class="toc-number">2.4.1.</span> <span class="toc-text">API断点:</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A0%B4%E8%A7%A3%E4%B9%8B%E6%B3%95-2"><span class="toc-number">2.4.2.</span> <span class="toc-text">破解之法:</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AF%94%E8%BE%83%E6%A0%A1%E9%AA%8C%E5%92%8C"><span class="toc-number">2.4.3.</span> <span class="toc-text">比较校验和:</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A0%B4%E8%A7%A3%E4%B9%8B%E6%B3%95-3"><span class="toc-number">2.4.4.</span> <span class="toc-text">破解之法:</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%AB%98%E7%BA%A7%E5%8F%8D%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF"><span class="toc-number">3.</span> <span class="toc-text">高级反调试技术:</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9E%83%E5%9C%BE%E4%BB%A3%E7%A0%81"><span class="toc-number">3.1.</span> <span class="toc-text">垃圾代码:</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%93%E4%B9%B1%E4%BB%A3%E7%A0%81%E5%AF%B9%E9%BD%90"><span class="toc-number">3.2.</span> <span class="toc-text">打乱代码对齐:</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8A%A0%E5%AF%86-x2F-%E8%A7%A3%E5%AF%86"><span class="toc-number">3.3.</span> <span class="toc-text">加密&#x2F;解密:</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81%E9%87%8D%E7%BB%84"><span class="toc-number">3.3.1.</span> <span class="toc-text">代码重组:</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Stolen-Bytes-Remove-OEP"><span class="toc-number">3.4.</span> <span class="toc-text">Stolen Bytes(Remove OEP):</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%98%E7%82%B9"><span class="toc-number">3.4.1.</span> <span class="toc-text">优点:</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#API%E9%87%8D%E5%AE%9A%E5%90%91"><span class="toc-number">3.5.</span> <span class="toc-text">API重定向:</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Debug-Bloker-Self-Debugging"><span class="toc-number">3.6.</span> <span class="toc-text">Debug Bloker(Self Debugging ):</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Debug-Bloker%E6%8A%80%E6%9C%AF%E4%BC%98%E7%82%B9"><span class="toc-number">3.6.1.</span> <span class="toc-text">Debug Bloker技术优点:</span></a></li></ol></li></ol></li></ol>
+      </div>
+    
+  </span>
+</div>
+
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        anti-debugging(windows)
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">yushusu</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2020-07-09T02:56:40.000Z" class="dt-published" itemprop="datePublished">2020-07-09</time>
+        
+      
+    </div>
+
+
+      
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <h1 id="静态反调试技术："><a href="#静态反调试技术：" class="headerlink" title="静态反调试技术："></a><strong>静态反调试技术：</strong></h1><p>许多反调试对OS有较强的依赖性。</p>
+<p>利用PEB结构体的一些信息可以判断反调试。</p>
+<h2 id="PEB结构体中与反调试密切相关的成员："><a href="#PEB结构体中与反调试密切相关的成员：" class="headerlink" title="PEB结构体中与反调试密切相关的成员："></a><strong>PEB结构体中与反调试密切相关的成员：</strong></h2><p>BeingDebugged（一个标志，表示进程是否处于被调试状态）</p>
+<p>NtGlobalFlag(与被调试进程堆栈有关)</p>
+<h3 id="BeingDebugged："><a href="#BeingDebugged：" class="headerlink" title="BeingDebugged："></a><strong>BeingDebugged：</strong></h3><p>进程处于被调试状态时，BeingDebugged（+0x2）的值被设置为1，未调试状态则为0；</p>
+<p>可以通过IsDebuggerPresent()函数获取该值来判断是否处于调试状态。</p>
+<h3 id="破解之法："><a href="#破解之法：" class="headerlink" title="破解之法："></a><strong>破解之法：</strong></h3><p>将该标志位设置为0即可</p>
+<h3 id="NtGlobalFlag"><a href="#NtGlobalFlag" class="headerlink" title="NtGlobalFlag:"></a><strong>NtGlobalFlag:</strong></h3><p>调试进程时，被调试进程堆内存有特殊标志，NtGlobalFlag（+0x68）的值被设置为0x70.</p>
+<h3 id="破解之法：-1"><a href="#破解之法：-1" class="headerlink" title="破解之法："></a><strong>破解之法：</strong></h3><p>将该标志位设置为0即可</p>
+<p>将运行进程附加到调试器，该标志位不变。</p>
+<h2 id="NtQueryInformationProcess"><a href="#NtQueryInformationProcess" class="headerlink" title="NtQueryInformationProcess():"></a><strong>NtQueryInformationProcess():</strong></h2><p>通过该函数可以获取与进程相关的信息，函数定义如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">__kernel_entry NTSTATUS NtQueryInformationProcess(</span><br><span class="line">  [in]            HANDLE           ProcessHandle,</span><br><span class="line">  [in]            PROCESSINFOCLASS ProcessInformationClass,</span><br><span class="line">  [out]           PVOID            ProcessInformation,</span><br><span class="line">  [in]            ULONG            ProcessInformationLength,</span><br><span class="line">  [out, optional] PULONG           ReturnLength</span><br><span class="line">);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[in] ProcessInformationClass</span><br></pre></td></tr></table></figure>
+
+<p>此参数可以是<strong>PROCESSINFOCLASS</strong>枚举中的值。</p>
+<p>其中与调试器探测相关的成员有：</p>
+<p>ProcessDebugPort，ProcessDebugObjectHandle，ProcessDebugFlags。</p>
+<h3 id="ProcessDebugPort（-0x7）："><a href="#ProcessDebugPort（-0x7）：" class="headerlink" title="ProcessDebugPort（+0x7）："></a><strong>ProcessDebugPort（+0x7）：</strong></h3><p>ProcessInformationClass参数值设置为ProcessDebugPort，调用NtQueryInformationProcess()函数就能获取调试端口。若进程处于调试状态，dwDebugPort设置为0，否则，设置为0xFFFFFFFF。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">DWORD dwDebugPort = 0;</span><br><span class="line">NtQueryInformationProcess(GetCurrentProcess(),</span><br><span class="line">							ProcessDebugPort,</span><br><span class="line">							&amp;dwDebugPort,</span><br><span class="line">							sizeof(dwDebugPort),</span><br><span class="line">							NULL</span><br><span class="line">						)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="CheckRemoteDebuggerPresent"><a href="#CheckRemoteDebuggerPresent" class="headerlink" title="CheckRemoteDebuggerPresent():"></a><strong>CheckRemoteDebuggerPresent():</strong></h3><p>该函数可以检查当前进程和其他进程是否处于被调试状态。该函数也调用了NtQueryInformation Process()函数。</p>
+<h3 id="ProcessDebugObjectHandle-0x1E"><a href="#ProcessDebugObjectHandle-0x1E" class="headerlink" title="ProcessDebugObjectHandle(+0x1E):"></a><strong>ProcessDebugObjectHandle(+0x1E):</strong></h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">DWORD hDebugObject = NULL;</span><br><span class="line">NtQueryInformationProcess(GetCurrentProcess(),</span><br><span class="line">							ProcessDebugObjectHandle,</span><br><span class="line">							&amp;hDebugObject,</span><br><span class="line">							sizeof(hDebugObject),</span><br><span class="line">							NULL</span><br><span class="line">						)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>调用函数，调试状态时第三个参数为调试对象句柄，非调试状态则为NULL。</p>
+<h3 id="ProcessDebugFlags（-0x1F）："><a href="#ProcessDebugFlags（-0x1F）：" class="headerlink" title="ProcessDebugFlags（+0x1F）："></a><strong>ProcessDebugFlags（+0x1F）：</strong></h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">DWORD bDebugFlag = TRUE;</span><br><span class="line">NtQueryInformationProcess(GetCurrentProcess(),</span><br><span class="line">							ProcessDebugFlags,</span><br><span class="line">							&amp;bDebugFlag,</span><br><span class="line">							sizeof(bDebugFlag),</span><br><span class="line">							NULL</span><br><span class="line">						)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>调用函数第三个参数可获取到调试标志位。为0处于被调试状态，为1则为非调试。</p>
+<h3 id="破解之法：-2"><a href="#破解之法：-2" class="headerlink" title="破解之法："></a><strong>破解之法：</strong></h3><p>若只调用几次函数，可以手动设置值，如果反复调用，则需要使用API钩取技术。（钩取时最好从函数第二个字节钩取，有些保护器会检查第一个字节来判断是否被钩取）。</p>
+<h2 id="NtQuerySystemInformation（）："><a href="#NtQuerySystemInformation（）：" class="headerlink" title="NtQuerySystemInformation（）："></a><strong>NtQuerySystemInformation（）：</strong></h2><p>基于调试环境检测的反调试技术。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">__kernel_entry NTSTATUS NtQuerySystemInformation(</span><br><span class="line">  [in]            SYSTEM_INFORMATION_CLASS SystemInformationClass,</span><br><span class="line">  [in, out]       PVOID                    SystemInformation,</span><br><span class="line">  [in]            ULONG                    SystemInformationLength,</span><br><span class="line">  [out, optional] PULONG                   ReturnLength</span><br><span class="line">);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>SYSTEM_INFORMATION_CLASS SystemInformationClass参数指定需要的系统信息类型，</p>
+<p>将结构体地址传递给 PVOID SystemInformation。</p>
+<p>SYSTEM_INFORMATION_CLASS是枚举类型</p>
+<p>判断OS是否处于调试模式下运行的参数：</p>
+<h3 id="SystemKernelDebuggerInformation（0x23）："><a href="#SystemKernelDebuggerInformation（0x23）：" class="headerlink" title="SystemKernelDebuggerInformation（0x23）："></a><strong>SystemKernelDebuggerInformation（0x23）：</strong></h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">NtQuerySystemInformation(SystemKernelDebuggerInformation,</span><br><span class="line">							（PVOID）&amp;DebuggerInfo,</span><br><span class="line">							sizeof(DebuggerInfo),</span><br><span class="line">							&amp;ulReturnedLength</span><br><span class="line">						)</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>第一个参数为SystemKernelDebuggerInformation时，第二个参数为结构体SYSTEM_KERNEL_DEBUGGER_INFORMATION的地址。若系统处于调试状态，SYSTEM_KERNEL_DEBUGGER_INFORMATION.DebuggerEnabled值设置为1.</p>
+<h2 id="NtQueryObject-："><a href="#NtQueryObject-：" class="headerlink" title="NtQueryObject()："></a><strong>NtQueryObject()：</strong></h2><p>NtQueryObject()可获取内核对象信息。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">__kernel_entry NTSYSCALLAPI NTSTATUS NtQueryObject(</span><br><span class="line">  [in, optional]  HANDLE                   Handle,</span><br><span class="line">  [in]            OBJECT_INFORMATION_CLASS ObjectInformationClass,</span><br><span class="line">  [out, optional] PVOID                    ObjectInformation,</span><br><span class="line">  [in]            ULONG                    ObjectInformationLength,</span><br><span class="line">  [out, optional] PULONG                   ReturnLength</span><br><span class="line">);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">typedef enum _OBJECT_INFORMATION_CLASS &#123;</span><br><span class="line">    ObjectBasicInformation,</span><br><span class="line">    ObjectNameInformation,</span><br><span class="line">    ObjectTypeInformation,</span><br><span class="line">    ObjectAllTypesInformation,</span><br><span class="line">    ObjectHandleInformation</span><br><span class="line">&#125; OBJECT_INFORMATION_CLASS, *POBJECT_INFORMATION_CLASS;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>首先使用ObjectAllTypesInformation获取系统所有对象信息，然后检测是否存在调试对象。</p>
+<h3 id="NtQueryObject-使用方法："><a href="#NtQueryObject-使用方法：" class="headerlink" title="NtQueryObject()使用方法："></a><strong>NtQueryObject()使用方法：</strong></h3><h3 id="1-获取内核对象信息链表："><a href="#1-获取内核对象信息链表：" class="headerlink" title="1.获取内核对象信息链表："></a><strong>1.获取内核对象信息链表：</strong></h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">ULONG lSize = 0</span><br><span class="line"></span><br><span class="line">pNtQueryObject(NULL,ObjectAllTypesInformation,&amp;Size,sizeof(lSize),&amp;lSize);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="2-分配内存："><a href="#2-分配内存：" class="headerlink" title="2.分配内存："></a><strong>2.分配内存：</strong></h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">void *pBuf = NULL;</span><br><span class="line">pBuf = VirtualAlloc(NULL,lSize,MEM_RESERVE|MEM_COMMIT,PAGE_READWRITE);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="3-获取内核对象信息链表"><a href="#3-获取内核对象信息链表" class="headerlink" title="3.获取内核对象信息链表:"></a><strong>3.获取内核对象信息链表:</strong></h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"> typedef struct _OBJECT_TYPE_INFORMATION &#123;</span><br><span class="line">        UNICODE_STRING TypeName;</span><br><span class="line">        ULONG TotalNumberOfHandles;</span><br><span class="line">        ULONG TotalNumberOfObjects;</span><br><span class="line">    &#125;OBJECT_TYPE_INFORMATION, *POBJECT_TYPE_INFORMATION;</span><br><span class="line"></span><br><span class="line">    typedef struct _OBJECT_ALL_INFORMATION &#123;</span><br><span class="line">        ULONG                   NumberOfObjectsTypes;</span><br><span class="line">        OBJECT_TYPE_INFORMATION ObjectTypeInformation[1];</span><br><span class="line">    &#125; OBJECT_ALL_INFORMATION, *POBJECT_ALL_INFORMATION;</span><br><span class="line"></span><br><span class="line">pNtQueryObject((HANDLE)0xFFFFFFFF, ObjectAllTypesInformation, pBuf, lSize, NULL);</span><br><span class="line">POBJECT_ALL_INFORMATION pObjectAllInfo = (POBJECT_ALL_INFORMATION)pBuf;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>调用函数后，所有对象信息代码被存入pBuf，将pBuf转化为OBJECT_ALL_INFORMATION类型。OBJECT_ALL_INFORMATION结构体由OBJECT_TYPE_INFORMATION结构体数组组成。实际内核对象存储在OBJECT_TYPE_INFORMATION结构体数组中，通过循环检索即可查看是否存在“调试对象”对象类型。</p>
+<h3 id="4-确定”调试对象“对象类型。"><a href="#4-确定”调试对象“对象类型。" class="headerlink" title="4.确定”调试对象“对象类型。"></a><strong>4.确定”调试对象“对象类型。</strong></h3><h3 id="破解之法：-3"><a href="#破解之法：-3" class="headerlink" title="破解之法："></a><strong>破解之法：</strong></h3><p>在调用NtQueryObject()时第二个参数ObjectAllTypesInformation（3）将该值修改为0即可。</p>
+<h2 id="ZwSetInformationThread"><a href="#ZwSetInformationThread" class="headerlink" title="ZwSetInformationThread():"></a><strong>ZwSetInformationThread():</strong></h2><p>该函数可以强制分离被调试者和调试器，</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">NTSYSAPI NTSTATUS ZwSetInformationThread(</span><br><span class="line">  [in] HANDLE          ThreadHandle,</span><br><span class="line">  [in] THREADINFOCLASS ThreadInformationClass,</span><br><span class="line">  [in] PVOID           ThreadInformation,</span><br><span class="line">  [in] ULONG           ThreadInformationLength</span><br><span class="line">);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>第二个参数表示线程信息类型，若其值设置为ThreadHideFromDebugger（0x11），调试该函数时，调试进程就被分离出来了。该函数不会对正常运行的程序产生任何影响，但若运行的是调试器程序，因为该函数隐藏了当前线程，调试器无法再收到该线程的调试事件，最终会停止调试。</p>
+<p>还有一个函数 DebugActiveProcessStop 用来分离调试器和被调试进程，从而停止调试。</p>
+<h3 id="破解之法：-4"><a href="#破解之法：-4" class="headerlink" title="破解之法："></a><strong>破解之法：</strong></h3><p>将第二个参数修改为0。</p>
+<h2 id="ETC"><a href="#ETC" class="headerlink" title="ETC"></a><strong>ETC</strong></h2><p>比较直接的反调试技术FindWindow() -&gt;检测OllyDbg窗口CreateToolhelp32Snapshot()检测OllyDbg进程… …</p>
+<p>一片比较好的文章：</p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/Cody_Ren/article/details/79965186">反调试</a></p>
+<h1 id="动态反调试："><a href="#动态反调试：" class="headerlink" title="动态反调试："></a><strong>动态反调试：</strong></h1><h2 id="异常："><a href="#异常：" class="headerlink" title="异常："></a><strong>异常：</strong></h2><h3 id="SEH"><a href="#SEH" class="headerlink" title="SEH:"></a><strong>SEH:</strong></h3><p>一些常见的异常：</p>
+<h3 id="EXCEPTION-BREAKPOINT"><a href="#EXCEPTION-BREAKPOINT" class="headerlink" title="EXCEPTION_BREAKPOINT:"></a><strong>EXCEPTION_BREAKPOINT:</strong></h3><p>若程序处于调试状态，触发异常时，系统会立刻停掉运行程序，将控制权转给调试器。修改调试器选项可以把处理中的进程产生的异常转给操作系统，自动调用SEH。</p>
+<p>触发异常时，pContext-&gt;Eip成员会保存处理完异常后的返回地址。</p>
+<h3 id="SetUnhandledExceptionFilter"><a href="#SetUnhandledExceptionFilter" class="headerlink" title="SetUnhandledExceptionFilter():"></a><strong>SetUnhandledExceptionFilter():</strong></h3><p>当SEH未注册，或者不存在时，UnhandledExceptionFilter()函数内部会运行最后一个异常处理器，会弹出错误，然后终止程序。</p>
+<p>该函数内部使用了NtQueryInformationProcess API，判断是否处于调试进程。</p>
+<p>SetUnhandledExceptionFilter()可以修改程序最后的异常处理器。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">LPTOP_LEVEL_EXCEPTION_FILTER SetUnhandledExceptionFilter(</span><br><span class="line">  [in] LPTOP_LEVEL_EXCEPTION_FILTER lpTopLevelExceptionFilter</span><br><span class="line">);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>只需要将新的TopLevelExceptionFilter传给lpTopLevelExceptionFilter即可。返回值为上一个函数的</p>
+<p>Exception Filter.</p>
+<h3 id="破解之法：-5"><a href="#破解之法：-5" class="headerlink" title="破解之法："></a><strong>破解之法：</strong></h3><p>先要让UnhandledExceptionFilter()函数内部调用的NtQueryInformationProcess API失效（API钩取技术）。然后调用SetUnhandledExceptionFilter()函数跟踪注册的Exception Filter，在正常运行时要调到哪个位置。</p>
+<h2 id="Timing-Cheak："><a href="#Timing-Cheak：" class="headerlink" title="Timing Cheak："></a><strong>Timing Cheak：</strong></h2><p>该技术运用了检测运行时间来判断是否处于调试。</p>
+<p>破解方法也很简单，直接修改判断语句就可以。</p>
+<h3 id="时间间隔检测法："><a href="#时间间隔检测法：" class="headerlink" title="时间间隔检测法："></a><strong>时间间隔检测法：</strong></h3><p>大致两种方法：</p>
+<h3 id="1-利用CPU计数器："><a href="#1-利用CPU计数器：" class="headerlink" title="1.利用CPU计数器："></a><strong>1.利用CPU计数器：</strong></h3><p>RDTSC</p>
+<p>QueryPerformanceCounter&#x2F;NtQueryPerformanceCounter</p>
+<p>GetTickCount</p>
+<h3 id="2-利用系统实际时间："><a href="#2-利用系统实际时间：" class="headerlink" title="2.利用系统实际时间："></a><strong>2.利用系统实际时间：</strong></h3><p>timeGetTime（）</p>
+<p>_ftime（）</p>
+<h3 id="计数器准确度："><a href="#计数器准确度：" class="headerlink" title="计数器准确度："></a><strong>计数器准确度：</strong></h3><p>RDTSC&gt;NtQueryPerformanceCounter()&gt;GetTickCount()</p>
+<h3 id="RDTSC"><a href="#RDTSC" class="headerlink" title="RDTSC:"></a><strong>RDTSC:</strong></h3><p>CPU对每个时钟周期进行计数,保存到TSC寄存器中.RDTSC是一条汇编指令,用来读取TSC值读入EDX:EAX中.</p>
+<h3 id="破解之法"><a href="#破解之法" class="headerlink" title="破解之法:"></a><strong>破解之法:</strong></h3><p>直接run过这段代码</p>
+<p>操作第二个RDTS的值</p>
+<p>操做条件分支指令</p>
+<h2 id="陷阱标志"><a href="#陷阱标志" class="headerlink" title="陷阱标志:"></a><strong>陷阱标志:</strong></h2><p>陷阱标志指EFLAGS寄存器的第九个比特位.</p>
+<h3 id="单步执行"><a href="#单步执行" class="headerlink" title="单步执行:"></a><strong>单步执行:</strong></h3><p>TF值为1时,CPU进入单步运行模式.CPU执行一条指令后就触发EXECEPTION_SINGLE_STEP异常,然后标志位自动清0 .</p>
+<h3 id="破解之法-1"><a href="#破解之法-1" class="headerlink" title="破解之法:"></a><strong>破解之法:</strong></h3><p>打开OD调试选项忽略该异常.</p>
+<h3 id="INT-2D"><a href="#INT-2D" class="headerlink" title="INT 2D:"></a><strong>INT 2D:</strong></h3><p>原为内核模式触发断点异常的指令,也可以在用户模式下触发异常.但程序调试运行时不会触发异常,只会简单忽略.这种正常模式和调试模式表现出的不同可以很好的运用于反调试.</p>
+<h3 id="忽略下条指令的第一个字节"><a href="#忽略下条指令的第一个字节" class="headerlink" title="忽略下条指令的第一个字节:"></a><strong>忽略下条指令的第一个字节:</strong></h3><p>该反调试技术可以形成较强的代码混淆.</p>
+<h3 id="一直运行到断点处"><a href="#一直运行到断点处" class="headerlink" title="一直运行到断点处:"></a><strong>一直运行到断点处:</strong></h3><p>用F7和F8时,不会停在下一条指令,直到遇到断点.</p>
+<h2 id="0xCC探测"><a href="#0xCC探测" class="headerlink" title="0xCC探测:"></a><strong>0xCC探测:</strong></h2><p>若程序检测到0xCC指令,可以判断处于调试状态.</p>
+<p>但这并不完全正确.</p>
+<h3 id="API断点"><a href="#API断点" class="headerlink" title="API断点:"></a><strong>API断点:</strong></h3><p>断点一般设置在API代码的开始部分,只要检测API代码的第一个字节是否为CC就可以判断进程是否处于调试当中.</p>
+<h3 id="破解之法-2"><a href="#破解之法-2" class="headerlink" title="破解之法:"></a><strong>破解之法:</strong></h3><p>在APi设置断点时,一般避开第一个字节.</p>
+<p>设置硬件断点</p>
+<h3 id="比较校验和"><a href="#比较校验和" class="headerlink" title="比较校验和:"></a><strong>比较校验和:</strong></h3><p>比较特定代码区域的校验和.如果在比较区域设置断点,指令变成0xcc,校验和就和原值不同,从而判断是否处于调试之中.(一般运用CRC32算法)</p>
+<h3 id="破解之法-3"><a href="#破解之法-3" class="headerlink" title="破解之法:"></a><strong>破解之法:</strong></h3><p>只要不在计算CRC代码区域设置断点或者修改其中代码,该反调试就会失效.</p>
+<p>修改CRC比较语句.</p>
+<h1 id="高级反调试技术"><a href="#高级反调试技术" class="headerlink" title="高级反调试技术:"></a><strong>高级反调试技术:</strong></h1><h2 id="垃圾代码"><a href="#垃圾代码" class="headerlink" title="垃圾代码:"></a><strong>垃圾代码:</strong></h2><p>向程序中添加大量垃圾代码,而且代码中有真正有用的代码或者运用于其他反调试的代码.</p>
+<h2 id="打乱代码对齐"><a href="#打乱代码对齐" class="headerlink" title="打乱代码对齐:"></a><strong>打乱代码对齐:</strong></h2><p>向代码中插入不必要的代码来降低反汇编的可读性的技术称为打乱代码对齐.</p>
+<h2 id="加密-x2F-解密"><a href="#加密-x2F-解密" class="headerlink" title="加密&#x2F;解密:"></a><strong>加密&#x2F;解密:</strong></h2><p>隐藏代码数据,有效防止调试分析程序.</p>
+<p>在程序某段代码中插入解密代码,只有执行这段代码才能解密出其他区域.</p>
+<p>反转储技术:加密代码被解密后,会再次被加密.</p>
+<h3 id="代码重组"><a href="#代码重组" class="headerlink" title="代码重组:"></a><strong>代码重组:</strong></h3><p>为了增加跟踪难度,采用了实时组合执行代码的技术手法.</p>
+<p>在解码代码中若设置断点,会计算出不同的结果,从而造成解析错误,所以最好在该区域禁止写入初值.</p>
+<h2 id="Stolen-Bytes-Remove-OEP"><a href="#Stolen-Bytes-Remove-OEP" class="headerlink" title="Stolen Bytes(Remove OEP):"></a><strong>Stolen Bytes(Remove OEP):</strong></h2><p>该技术将部分源代码转移到压缩器或者保护器创建的内存区域运行.</p>
+<h3 id="优点"><a href="#优点" class="headerlink" title="优点:"></a><strong>优点:</strong></h3><p>转储进程时,一部分OEP代码会被删除,转储的文件无法正常运行反转储技术.</p>
+<p>运用该技术的文件再次经过压缩器&#x2F;保护器压缩后,会给逆向分析人员造成困难.文件脱壳,也不能找到OEP.</p>
+<h2 id="API重定向"><a href="#API重定向" class="headerlink" title="API重定向:"></a><strong>API重定向:</strong></h2><p>程序会将全部或部分主要API代码复制到其他内存区域,然后分析要保护的目标进程的代码,修改调用API代码,从而使自身复制的API代码得以执行.这样,即使在原代码处设断点也没用(支持反转储功能)</p>
+<h2 id="Debug-Bloker-Self-Debugging"><a href="#Debug-Bloker-Self-Debugging" class="headerlink" title="Debug Bloker(Self Debugging ):"></a><strong>Debug Bloker(Self Debugging ):</strong></h2><p>Debug Bloker时自我创建技术(以子进程形式运行自身进程).自我创建技术中,子进程负责执行实际原代码,父进程负责创建子进程,修改内存(代码&#x2F;数据),更改EP地址.所以仅调试父进程无法跳到OEP处.但将子进程附加到调试器,这种反调试就会失效.而Debug Bloker技术弥补这一缺点.</p>
+<h3 id="Debug-Bloker技术优点"><a href="#Debug-Bloker技术优点" class="headerlink" title="Debug Bloker技术优点:"></a><strong>Debug Bloker技术优点:</strong></h3><p>防止代码调试.因子进程运行实际原代码已处于调试当中.原则上无法使用调试器附加操作.</p>
+<p>能够控制子进程.在调试器-被调试者关系中,调试器具有很大权限,可以处理被调试进程的异常,控制代码执行流程.</p>
+<p>jnz ： zf&#x3D;0就跳转 （值等于0，zf&#x3D;1</p>
+<p>绕过IsDebuggerPresent ：</p>
+<ol>
+<li><p>将BeingDebugged标志设为0即可(或改变一下eax返回值)</p>
+</li>
+<li><p>在IsDebuggerPresent 函数前面patch加上retn 直接返回</p>
+</li>
+</ol>
+<p>参考：</p>
+<p><a target="_blank" rel="noopener" href="https://www.freebuf.com/articles/others-articles/181085.html">https://www.freebuf.com/articles/others-articles/181085.html</a></p>
+<p><a target="_blank" rel="noopener" href="https://ctf-wiki.org/reverse/windows/anti-debug/ntglobalflag/">https://ctf-wiki.org/reverse/windows/anti-debug/ntglobalflag/</a></p>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/archives/">Home</a></li>
+        
+          <li><a href="/about/">About</a></li>
+        
+          <li><a href="/archives/">Writing</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="http://github.com/yushusu">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    
+    
+      <div id="toc-footer" style="display: none">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%9D%99%E6%80%81%E5%8F%8D%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF%EF%BC%9A"><span class="toc-number">1.</span> <span class="toc-text">静态反调试技术：</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#PEB%E7%BB%93%E6%9E%84%E4%BD%93%E4%B8%AD%E4%B8%8E%E5%8F%8D%E8%B0%83%E8%AF%95%E5%AF%86%E5%88%87%E7%9B%B8%E5%85%B3%E7%9A%84%E6%88%90%E5%91%98%EF%BC%9A"><span class="toc-number">1.1.</span> <span class="toc-text">PEB结构体中与反调试密切相关的成员：</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#BeingDebugged%EF%BC%9A"><span class="toc-number">1.1.1.</span> <span class="toc-text">BeingDebugged：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A0%B4%E8%A7%A3%E4%B9%8B%E6%B3%95%EF%BC%9A"><span class="toc-number">1.1.2.</span> <span class="toc-text">破解之法：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#NtGlobalFlag"><span class="toc-number">1.1.3.</span> <span class="toc-text">NtGlobalFlag:</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A0%B4%E8%A7%A3%E4%B9%8B%E6%B3%95%EF%BC%9A-1"><span class="toc-number">1.1.4.</span> <span class="toc-text">破解之法：</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#NtQueryInformationProcess"><span class="toc-number">1.2.</span> <span class="toc-text">NtQueryInformationProcess():</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ProcessDebugPort%EF%BC%88-0x7%EF%BC%89%EF%BC%9A"><span class="toc-number">1.2.1.</span> <span class="toc-text">ProcessDebugPort（+0x7）：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#CheckRemoteDebuggerPresent"><span class="toc-number">1.2.2.</span> <span class="toc-text">CheckRemoteDebuggerPresent():</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ProcessDebugObjectHandle-0x1E"><span class="toc-number">1.2.3.</span> <span class="toc-text">ProcessDebugObjectHandle(+0x1E):</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ProcessDebugFlags%EF%BC%88-0x1F%EF%BC%89%EF%BC%9A"><span class="toc-number">1.2.4.</span> <span class="toc-text">ProcessDebugFlags（+0x1F）：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A0%B4%E8%A7%A3%E4%B9%8B%E6%B3%95%EF%BC%9A-2"><span class="toc-number">1.2.5.</span> <span class="toc-text">破解之法：</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#NtQuerySystemInformation%EF%BC%88%EF%BC%89%EF%BC%9A"><span class="toc-number">1.3.</span> <span class="toc-text">NtQuerySystemInformation（）：</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#SystemKernelDebuggerInformation%EF%BC%880x23%EF%BC%89%EF%BC%9A"><span class="toc-number">1.3.1.</span> <span class="toc-text">SystemKernelDebuggerInformation（0x23）：</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#NtQueryObject-%EF%BC%9A"><span class="toc-number">1.4.</span> <span class="toc-text">NtQueryObject()：</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#NtQueryObject-%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95%EF%BC%9A"><span class="toc-number">1.4.1.</span> <span class="toc-text">NtQueryObject()使用方法：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E8%8E%B7%E5%8F%96%E5%86%85%E6%A0%B8%E5%AF%B9%E8%B1%A1%E4%BF%A1%E6%81%AF%E9%93%BE%E8%A1%A8%EF%BC%9A"><span class="toc-number">1.4.2.</span> <span class="toc-text">1.获取内核对象信息链表：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E5%88%86%E9%85%8D%E5%86%85%E5%AD%98%EF%BC%9A"><span class="toc-number">1.4.3.</span> <span class="toc-text">2.分配内存：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E8%8E%B7%E5%8F%96%E5%86%85%E6%A0%B8%E5%AF%B9%E8%B1%A1%E4%BF%A1%E6%81%AF%E9%93%BE%E8%A1%A8"><span class="toc-number">1.4.4.</span> <span class="toc-text">3.获取内核对象信息链表:</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E7%A1%AE%E5%AE%9A%E2%80%9D%E8%B0%83%E8%AF%95%E5%AF%B9%E8%B1%A1%E2%80%9C%E5%AF%B9%E8%B1%A1%E7%B1%BB%E5%9E%8B%E3%80%82"><span class="toc-number">1.4.5.</span> <span class="toc-text">4.确定”调试对象“对象类型。</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A0%B4%E8%A7%A3%E4%B9%8B%E6%B3%95%EF%BC%9A-3"><span class="toc-number">1.4.6.</span> <span class="toc-text">破解之法：</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ZwSetInformationThread"><span class="toc-number">1.5.</span> <span class="toc-text">ZwSetInformationThread():</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A0%B4%E8%A7%A3%E4%B9%8B%E6%B3%95%EF%BC%9A-4"><span class="toc-number">1.5.1.</span> <span class="toc-text">破解之法：</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ETC"><span class="toc-number">1.6.</span> <span class="toc-text">ETC</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E5%8F%8D%E8%B0%83%E8%AF%95%EF%BC%9A"><span class="toc-number">2.</span> <span class="toc-text">动态反调试：</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%82%E5%B8%B8%EF%BC%9A"><span class="toc-number">2.1.</span> <span class="toc-text">异常：</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#SEH"><span class="toc-number">2.1.1.</span> <span class="toc-text">SEH:</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#EXCEPTION-BREAKPOINT"><span class="toc-number">2.1.2.</span> <span class="toc-text">EXCEPTION_BREAKPOINT:</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SetUnhandledExceptionFilter"><span class="toc-number">2.1.3.</span> <span class="toc-text">SetUnhandledExceptionFilter():</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A0%B4%E8%A7%A3%E4%B9%8B%E6%B3%95%EF%BC%9A-5"><span class="toc-number">2.1.4.</span> <span class="toc-text">破解之法：</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Timing-Cheak%EF%BC%9A"><span class="toc-number">2.2.</span> <span class="toc-text">Timing Cheak：</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%97%B6%E9%97%B4%E9%97%B4%E9%9A%94%E6%A3%80%E6%B5%8B%E6%B3%95%EF%BC%9A"><span class="toc-number">2.2.1.</span> <span class="toc-text">时间间隔检测法：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%88%A9%E7%94%A8CPU%E8%AE%A1%E6%95%B0%E5%99%A8%EF%BC%9A"><span class="toc-number">2.2.2.</span> <span class="toc-text">1.利用CPU计数器：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E5%88%A9%E7%94%A8%E7%B3%BB%E7%BB%9F%E5%AE%9E%E9%99%85%E6%97%B6%E9%97%B4%EF%BC%9A"><span class="toc-number">2.2.3.</span> <span class="toc-text">2.利用系统实际时间：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%A1%E6%95%B0%E5%99%A8%E5%87%86%E7%A1%AE%E5%BA%A6%EF%BC%9A"><span class="toc-number">2.2.4.</span> <span class="toc-text">计数器准确度：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#RDTSC"><span class="toc-number">2.2.5.</span> <span class="toc-text">RDTSC:</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A0%B4%E8%A7%A3%E4%B9%8B%E6%B3%95"><span class="toc-number">2.2.6.</span> <span class="toc-text">破解之法:</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%99%B7%E9%98%B1%E6%A0%87%E5%BF%97"><span class="toc-number">2.3.</span> <span class="toc-text">陷阱标志:</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%95%E6%AD%A5%E6%89%A7%E8%A1%8C"><span class="toc-number">2.3.1.</span> <span class="toc-text">单步执行:</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A0%B4%E8%A7%A3%E4%B9%8B%E6%B3%95-1"><span class="toc-number">2.3.2.</span> <span class="toc-text">破解之法:</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#INT-2D"><span class="toc-number">2.3.3.</span> <span class="toc-text">INT 2D:</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BF%BD%E7%95%A5%E4%B8%8B%E6%9D%A1%E6%8C%87%E4%BB%A4%E7%9A%84%E7%AC%AC%E4%B8%80%E4%B8%AA%E5%AD%97%E8%8A%82"><span class="toc-number">2.3.4.</span> <span class="toc-text">忽略下条指令的第一个字节:</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E7%9B%B4%E8%BF%90%E8%A1%8C%E5%88%B0%E6%96%AD%E7%82%B9%E5%A4%84"><span class="toc-number">2.3.5.</span> <span class="toc-text">一直运行到断点处:</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#0xCC%E6%8E%A2%E6%B5%8B"><span class="toc-number">2.4.</span> <span class="toc-text">0xCC探测:</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#API%E6%96%AD%E7%82%B9"><span class="toc-number">2.4.1.</span> <span class="toc-text">API断点:</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A0%B4%E8%A7%A3%E4%B9%8B%E6%B3%95-2"><span class="toc-number">2.4.2.</span> <span class="toc-text">破解之法:</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AF%94%E8%BE%83%E6%A0%A1%E9%AA%8C%E5%92%8C"><span class="toc-number">2.4.3.</span> <span class="toc-text">比较校验和:</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A0%B4%E8%A7%A3%E4%B9%8B%E6%B3%95-3"><span class="toc-number">2.4.4.</span> <span class="toc-text">破解之法:</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%AB%98%E7%BA%A7%E5%8F%8D%E8%B0%83%E8%AF%95%E6%8A%80%E6%9C%AF"><span class="toc-number">3.</span> <span class="toc-text">高级反调试技术:</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9E%83%E5%9C%BE%E4%BB%A3%E7%A0%81"><span class="toc-number">3.1.</span> <span class="toc-text">垃圾代码:</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%93%E4%B9%B1%E4%BB%A3%E7%A0%81%E5%AF%B9%E9%BD%90"><span class="toc-number">3.2.</span> <span class="toc-text">打乱代码对齐:</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8A%A0%E5%AF%86-x2F-%E8%A7%A3%E5%AF%86"><span class="toc-number">3.3.</span> <span class="toc-text">加密&#x2F;解密:</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81%E9%87%8D%E7%BB%84"><span class="toc-number">3.3.1.</span> <span class="toc-text">代码重组:</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Stolen-Bytes-Remove-OEP"><span class="toc-number">3.4.</span> <span class="toc-text">Stolen Bytes(Remove OEP):</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%98%E7%82%B9"><span class="toc-number">3.4.1.</span> <span class="toc-text">优点:</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#API%E9%87%8D%E5%AE%9A%E5%90%91"><span class="toc-number">3.5.</span> <span class="toc-text">API重定向:</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Debug-Bloker-Self-Debugging"><span class="toc-number">3.6.</span> <span class="toc-text">Debug Bloker(Self Debugging ):</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Debug-Bloker%E6%8A%80%E6%9C%AF%E4%BC%98%E7%82%B9"><span class="toc-number">3.6.1.</span> <span class="toc-text">Debug Bloker技术优点:</span></a></li></ol></li></ol></li></ol>
+      </div>
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://yushusu.github.io/2020/07/09/anti-debugging-windows/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://yushusu.github.io/2020/07/09/anti-debugging-windows/&text=anti-debugging(windows)"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://yushusu.github.io/2020/07/09/anti-debugging-windows/&title=anti-debugging(windows)"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yushusu.github.io/2020/07/09/anti-debugging-windows/&is_video=false&description=anti-debugging(windows)"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=anti-debugging(windows)&body=Check out this article: http://yushusu.github.io/2020/07/09/anti-debugging-windows/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://yushusu.github.io/2020/07/09/anti-debugging-windows/&title=anti-debugging(windows)"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://yushusu.github.io/2020/07/09/anti-debugging-windows/&title=anti-debugging(windows)"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://yushusu.github.io/2020/07/09/anti-debugging-windows/&title=anti-debugging(windows)"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://yushusu.github.io/2020/07/09/anti-debugging-windows/&title=anti-debugging(windows)"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://yushusu.github.io/2020/07/09/anti-debugging-windows/&name=anti-debugging(windows)&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://yushusu.github.io/2020/07/09/anti-debugging-windows/&t=anti-debugging(windows)"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
+        
+          <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fa-solid fa-list fa-lg" aria-hidden="true"></i> TOC</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2016-2023
+    yushusu
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/archives/">Home</a></li><!--
+     --><!--
+       --><li><a href="/about/">About</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="http://github.com/yushusu">Projects</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"Copy to clipboard!\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "Copied!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>

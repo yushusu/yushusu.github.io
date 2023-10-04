@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="global-metadata.bat have been encrypt，using frida search pattern memory AF 1B B1 FA defeat，so we google the load process of metadata to decrypt： 1234il2cpp_init  -&gt; il2cpp::vm::Runtime::Init    -&amp;g">
+<meta property="og:type" content="article">
+<meta property="og:title" content="2018_N1ctf_baby_unity3d">
+<meta property="og:url" content="http://yushusu.github.io/2020/08/04/2018-N1ctf-baby-unity3d/">
+<meta property="og:site_name" content="YUSHUSU">
+<meta property="og:description" content="global-metadata.bat have been encrypt，using frida search pattern memory AF 1B B1 FA defeat，so we google the load process of metadata to decrypt： 1234il2cpp_init  -&gt; il2cpp::vm::Runtime::Init    -&amp;g">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2020-08-04T05:34:46.000Z">
+<meta property="article:modified_time" content="2023-10-04T05:35:39.089Z">
+<meta property="article:author" content="yushusu">
+<meta name="twitter:card" content="summary">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>2018_N1ctf_baby_unity3d</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/archives/">Home</a></li><!--
+     --><!--
+       --><li><a href="/about/">About</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="http://github.com/yushusu">Projects</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" aria-label="Previous post" href="/2021/06/29/heapnote/"><i class="fa-solid fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" aria-label="Next post" href="/2020/07/09/anti-debugging-windows/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="Back to top" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="Share post" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://yushusu.github.io/2020/08/04/2018-N1ctf-baby-unity3d/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://yushusu.github.io/2020/08/04/2018-N1ctf-baby-unity3d/&text=2018_N1ctf_baby_unity3d"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://yushusu.github.io/2020/08/04/2018-N1ctf-baby-unity3d/&title=2018_N1ctf_baby_unity3d"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yushusu.github.io/2020/08/04/2018-N1ctf-baby-unity3d/&is_video=false&description=2018_N1ctf_baby_unity3d"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=2018_N1ctf_baby_unity3d&body=Check out this article: http://yushusu.github.io/2020/08/04/2018-N1ctf-baby-unity3d/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://yushusu.github.io/2020/08/04/2018-N1ctf-baby-unity3d/&title=2018_N1ctf_baby_unity3d"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://yushusu.github.io/2020/08/04/2018-N1ctf-baby-unity3d/&title=2018_N1ctf_baby_unity3d"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://yushusu.github.io/2020/08/04/2018-N1ctf-baby-unity3d/&title=2018_N1ctf_baby_unity3d"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://yushusu.github.io/2020/08/04/2018-N1ctf-baby-unity3d/&title=2018_N1ctf_baby_unity3d"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://yushusu.github.io/2020/08/04/2018-N1ctf-baby-unity3d/&name=2018_N1ctf_baby_unity3d&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://yushusu.github.io/2020/08/04/2018-N1ctf-baby-unity3d/&t=2018_N1ctf_baby_unity3d"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    
+    
+  </span>
+</div>
+
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        2018_N1ctf_baby_unity3d
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">yushusu</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2020-08-04T05:34:46.000Z" class="dt-published" itemprop="datePublished">2020-08-04</time>
+        
+      
+    </div>
+
+
+      
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <p>global-metadata.bat have been encrypt，using frida search pattern memory <code>AF 1B B1 FA</code> defeat，so we google the load process of metadata to decrypt：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">il2cpp_init</span><br><span class="line">  -&gt; il2cpp::vm::Runtime::Init</span><br><span class="line">    -&gt; il2cpp::vm::MetadataCache::Initialize</span><br><span class="line">      -&gt; il2cpp::vm::MetadataLoader::LoadMetadataFile</span><br></pre></td></tr></table></figure>
+
+<p><a target="_blank" rel="noopener" href="http://libil2cpp.so/">libil2cpp.so</a> frist go into the il2cpp_init, we can compare with source code, generally, the metadata decrypt in LoadMetadataFile：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">char</span> *__fastcall <span class="title">decrypt</span><span class="params">(<span class="type">int</span> metadate_enc, <span class="type">size_t</span> size)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="type">char</span> *result; <span class="comment">// r0</span></span><br><span class="line">  <span class="type">size_t</span> v5; <span class="comment">// r2</span></span><br><span class="line"></span><br><span class="line">  result = <span class="built_in">malloc</span>(size);</span><br><span class="line">  <span class="keyword">if</span> ( size )</span><br><span class="line">  &#123;</span><br><span class="line">    v5 = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">do</span></span><br><span class="line">    &#123;</span><br><span class="line">      *&amp;result[v5 &amp; <span class="number">0xFFFFFFFC</span>] = *(metadate_enc + (v5 &amp; <span class="number">0xFFFFFFFC</span>)) ^ dword_5DCF6C[(v5 + v5 / <span class="number">0x84</span>) % <span class="number">0x84</span>];</span><br><span class="line">      v5 += <span class="number">4</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">while</span> ( v5 &lt; size );</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>decrypt script goes here：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> struct</span><br><span class="line">f = <span class="built_in">open</span>(<span class="string">&#x27;global-metadata.dat&#x27;</span>, <span class="string">&#x27;rb&#x27;</span>)</span><br><span class="line">enc = <span class="string">&quot;&quot;</span></span><br><span class="line">enc = f.read()</span><br><span class="line">key = [<span class="number">0xF83DA249</span>, <span class="number">0x15D12772</span>, <span class="number">0x40C50697</span>, <span class="number">0x984E2B6B</span>, <span class="number">0x14EC5FF8</span>, <span class="number">0xB2E24927</span>,</span><br><span class="line">       <span class="number">0x3B8F77AE</span>, <span class="number">0x472474CD</span>, <span class="number">0x5B0CE524</span>, <span class="number">0xA17E1A31</span>, <span class="number">0x6C60852C</span>, <span class="number">0xD86AD267</span>, <span class="number">0x832612B7</span>, <span class="number">0x1CA03645</span>, <span class="number">0x5515ABC8</span>,</span><br><span class="line">       <span class="number">0xC5FEFF52</span>, <span class="number">0xFFFFAC00</span>, <span class="number">0x0FE95CB6</span>, <span class="number">0x79CF43DD</span>, <span class="number">0xAA48A3FB</span>, <span class="number">0xE1D71788</span>, <span class="number">0x97663D3A</span>, <span class="number">0xF5CFFEA7</span>, <span class="number">0xEE617632</span>,</span><br><span class="line">       <span class="number">0x4B11A7EE</span>, <span class="number">0x040EF0B5</span>, <span class="number">0x0606FC00</span>, <span class="number">0xC1530FAE</span>, <span class="number">0x7A827441</span>, <span class="number">0xFCE91D44</span>, <span class="number">0x8C4CC1B1</span>, <span class="number">0x7294C28D</span>, <span class="number">0x8D976162</span>,</span><br><span class="line">       <span class="number">0x8315435A</span>, <span class="number">0x3917A408</span>, <span class="number">0xAF7F1327</span>, <span class="number">0xD4BFAED7</span>, <span class="number">0x80D0ABFC</span>, <span class="number">0x63923DC3</span>, <span class="number">0xB0E6B35A</span>, <span class="number">0xB815088F</span>, <span class="number">0x9BACF123</span>,</span><br><span class="line">       <span class="number">0xE32411C3</span>, <span class="number">0xA026100B</span>, <span class="number">0xBCF2FF58</span>, <span class="number">0x641C5CFC</span>, <span class="number">0xC4A2D7DC</span>, <span class="number">0x99E05DCA</span>, <span class="number">0x9DC699F7</span>, <span class="number">0xB76A8621</span>, <span class="number">0x8E40E03C</span>,</span><br><span class="line">       <span class="number">0x28F3C2D4</span>, <span class="number">0x40F91223</span>, <span class="number">0x67A952E0</span>, <span class="number">0x505F3621</span>, <span class="number">0xBAF13D33</span>, <span class="number">0xA75B61CC</span>, <span class="number">0xAB6AEF54</span>, <span class="number">0xC4DFB60D</span>, <span class="number">0xD29D873A</span>,</span><br><span class="line">       <span class="number">0x57A77146</span>, <span class="number">0x393F86B8</span>, <span class="number">0x2A734A54</span>, <span class="number">0x31A56AF6</span>, <span class="number">0x0C5D9160</span>, <span class="number">0xAF83A19A</span>, <span class="number">0x7FC9B41F</span>, <span class="number">0xD079EF47</span>, <span class="number">0xE3295281</span>,</span><br><span class="line">       <span class="number">0x5602E3E5</span>, <span class="number">0xAB915E69</span>, <span class="number">0x225A1992</span>, <span class="number">0xA387F6B2</span>, <span class="number">0x7E981613</span>, <span class="number">0xFC6CF59A</span>, <span class="number">0xD34A7378</span>, <span class="number">0xB608B7D6</span>, <span class="number">0xA9EB93D9</span>,</span><br><span class="line">       <span class="number">0x26DDB218</span>, <span class="number">0x65F33F5F</span>, <span class="number">0xF9314442</span>, <span class="number">0x5D5C0599</span>, <span class="number">0xEA72E774</span>, <span class="number">0x1605A502</span>, <span class="number">0xEC6CBC9F</span>, <span class="number">0x7F8A1BD1</span>, <span class="number">0x4DD8CF07</span>,</span><br><span class="line">       <span class="number">0x2E6D79E0</span>, <span class="number">0x6990418F</span>, <span class="number">0xCF77BAD9</span>, <span class="number">0xD4FE0147</span>, <span class="number">0xFEF4A3E8</span>, <span class="number">0x85C45BDE</span>, <span class="number">0xB58F8E67</span>, <span class="number">0xA63EB8D7</span>, <span class="number">0xC69BD19B</span>,</span><br><span class="line">       <span class="number">0xDA442DCA</span>, <span class="number">0x3C0C1743</span>, <span class="number">0xE6F39D49</span>, <span class="number">0x33568804</span>, <span class="number">0x85EB6320</span>, <span class="number">0xDA223445</span>, <span class="number">0x36C4A941</span>, <span class="number">0xA9185589</span>, <span class="number">0x71B22D67</span>,</span><br><span class="line">       <span class="number">0xF59A2647</span>, <span class="number">0x3C8B583E</span>, <span class="number">0xD7717DED</span>, <span class="number">0xDF05699C</span>, <span class="number">0x4378367D</span>, <span class="number">0x1C459339</span>, <span class="number">0x85133B7F</span>, <span class="number">0x49800CE2</span>, <span class="number">0x3666CA0D</span>,</span><br><span class="line">       <span class="number">0xAF7AB504</span>, <span class="number">0x4FF5B8F1</span>, <span class="number">0xC23772E3</span>, <span class="number">0x3544F31E</span>, <span class="number">0x0F673A57</span>, <span class="number">0xF40600E1</span>, <span class="number">0x7E967417</span>, <span class="number">0x15A26203</span>, <span class="number">0x5F2E34CE</span>,</span><br><span class="line">       <span class="number">0x70C7921A</span>, <span class="number">0xD1C190DF</span>, <span class="number">0x5BB5DA6B</span>, <span class="number">0x60979C75</span>, <span class="number">0x4EA758A4</span>, <span class="number">0x078FE359</span>, <span class="number">0x1664639C</span>, <span class="number">0xAE14E73B</span>, <span class="number">0x2070FF03</span>]</span><br><span class="line"><span class="keyword">with</span> <span class="built_in">open</span>(<span class="string">&#x27;decrypt&#x27;</span>, <span class="string">&#x27;wb&#x27;</span>) <span class="keyword">as</span> fp:</span><br><span class="line">    n = <span class="number">0</span></span><br><span class="line">    <span class="keyword">while</span> n &lt; <span class="built_in">len</span>(enc):</span><br><span class="line">        num = struct.unpack(<span class="string">&quot;&lt;I&quot;</span>, enc[n:n + <span class="number">4</span>])[<span class="number">0</span>]</span><br><span class="line">        num = num ^ key[(n + n // <span class="number">0x84</span>) % <span class="number">0x84</span>]</span><br><span class="line">        dec = struct.pack(<span class="string">&#x27;I&#x27;</span>, num)</span><br><span class="line">        fp.write(dec)</span><br><span class="line">        n = n + <span class="number">4</span></span><br></pre></td></tr></table></figure>
+
+<p>Then we must repair the magic inside the file <code>AF 1B B1 FA</code>, finally we can using Il2cppDumper dump the information of libil2cpp.sp，we find the offset of CheckFlag function showing in the dump file , it using an AES with iv to encrpt the flag :</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> __fastcall <span class="title function_">checkflag</span><span class="params">(<span class="type">int</span> a1, <span class="type">int</span> a2)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">int</span> v3; <span class="comment">// r0</span></span><br><span class="line">  <span class="type">int</span> flag; <span class="comment">// r4</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> ( !byte_69C825 )</span><br><span class="line">  &#123;</span><br><span class="line">    sub_4B82BC(<span class="number">1279</span>);</span><br><span class="line">    byte_69C825 = <span class="number">1</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  v3 = dword_698140;</span><br><span class="line">  <span class="keyword">if</span> ( (*(dword_698140 + <span class="number">178</span>) &amp; <span class="number">1</span>) != <span class="number">0</span> &amp;&amp; !*(dword_698140 + <span class="number">96</span>) )</span><br><span class="line">  &#123;</span><br><span class="line">    il2cpp_runtime_class_init_0();</span><br><span class="line">    v3 = dword_698140;</span><br><span class="line">  &#125;</span><br><span class="line">  flag = aes(*(v3 + <span class="number">80</span>), a2, *(*(v3 + <span class="number">80</span>) + <span class="number">4000</span>), *(*(v3 + <span class="number">80</span>) + <span class="number">2364</span>));<span class="comment">//0x518b54</span></span><br><span class="line">  <span class="keyword">if</span> ( (*(dword_696FB8 + <span class="number">178</span>) &amp; <span class="number">1</span>) != <span class="number">0</span> &amp;&amp; !*(dword_696FB8 + <span class="number">96</span>) )</span><br><span class="line">    il2cpp_runtime_class_init_0();</span><br><span class="line">  <span class="keyword">return</span> sub_7D644(<span class="number">0</span>, flag, dword_69B7F0, <span class="number">0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>using frida hook the AES function to print the arguments and decrpt it :</p>
+<figure class="highlight jsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="title class_">Java</span>.<span class="title function_">perform</span>(<span class="keyword">function</span>(<span class="params"></span>)&#123;</span><br><span class="line">    <span class="keyword">var</span> soAdrr = <span class="title class_">Module</span>.<span class="title function_">findBaseAddress</span>(<span class="string">&quot;libil2cpp.so&quot;</span>);</span><br><span class="line">   </span><br><span class="line">    <span class="keyword">var</span> ptrAESEncrypt = soAdrr.<span class="title function_">add</span>(<span class="number">0x518b54</span>);</span><br><span class="line"></span><br><span class="line">    <span class="title class_">Interceptor</span>.<span class="title function_">attach</span>(ptrAESEncrypt,&#123;</span><br><span class="line">        <span class="attr">onEnter</span>: <span class="keyword">function</span>(<span class="params">args</span>)&#123;</span><br><span class="line">            <span class="variable language_">console</span>.<span class="title function_">log</span>((<span class="string">&quot;enter ptrAESEncrypt args[0]-&gt; &quot;</span> + args[<span class="number">0</span>]));</span><br><span class="line">            <span class="variable language_">console</span>.<span class="title function_">log</span>((<span class="string">&quot;enter ptrAESEncrypt args[1] text-&gt;\n&quot;</span> + <span class="title function_">hexdump</span>(args[<span class="number">1</span>])));</span><br><span class="line">            <span class="variable language_">console</span>.<span class="title function_">log</span>((<span class="string">&quot;enter ptrAESEncrypt args[2]-&gt; password\n&quot;</span> + <span class="title function_">hexdump</span>(args[<span class="number">2</span>],&#123;</span><br><span class="line">                <span class="attr">offset</span>: <span class="number">12</span>,</span><br><span class="line">                <span class="attr">length</span>: <span class="number">12</span>+<span class="number">16</span> * <span class="number">2</span></span><br><span class="line">            &#125;)));</span><br><span class="line">            <span class="variable language_">console</span>.<span class="title function_">log</span>((<span class="string">&quot;enter ptrAESEncrypt args[3]-&gt; iv\n&quot;</span> + <span class="title function_">hexdump</span>(args[<span class="number">3</span>],&#123;</span><br><span class="line">                <span class="attr">offset</span>: <span class="number">12</span>,</span><br><span class="line">                <span class="attr">length</span>: <span class="number">12</span>+<span class="number">16</span> * <span class="number">2</span></span><br><span class="line">            &#125;)));</span><br><span class="line">        &#125;,</span><br><span class="line">        <span class="attr">onLeave</span>: <span class="keyword">function</span>(<span class="params">args</span>)&#123;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;)</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+<p>N1CTF{h4ppy_W1TH_1l2cpp}</p>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/archives/">Home</a></li>
+        
+          <li><a href="/about/">About</a></li>
+        
+          <li><a href="/archives/">Writing</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="http://github.com/yushusu">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://yushusu.github.io/2020/08/04/2018-N1ctf-baby-unity3d/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://yushusu.github.io/2020/08/04/2018-N1ctf-baby-unity3d/&text=2018_N1ctf_baby_unity3d"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://yushusu.github.io/2020/08/04/2018-N1ctf-baby-unity3d/&title=2018_N1ctf_baby_unity3d"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yushusu.github.io/2020/08/04/2018-N1ctf-baby-unity3d/&is_video=false&description=2018_N1ctf_baby_unity3d"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=2018_N1ctf_baby_unity3d&body=Check out this article: http://yushusu.github.io/2020/08/04/2018-N1ctf-baby-unity3d/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://yushusu.github.io/2020/08/04/2018-N1ctf-baby-unity3d/&title=2018_N1ctf_baby_unity3d"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://yushusu.github.io/2020/08/04/2018-N1ctf-baby-unity3d/&title=2018_N1ctf_baby_unity3d"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://yushusu.github.io/2020/08/04/2018-N1ctf-baby-unity3d/&title=2018_N1ctf_baby_unity3d"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://yushusu.github.io/2020/08/04/2018-N1ctf-baby-unity3d/&title=2018_N1ctf_baby_unity3d"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://yushusu.github.io/2020/08/04/2018-N1ctf-baby-unity3d/&name=2018_N1ctf_baby_unity3d&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://yushusu.github.io/2020/08/04/2018-N1ctf-baby-unity3d/&t=2018_N1ctf_baby_unity3d"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2016-2023
+    yushusu
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/archives/">Home</a></li><!--
+     --><!--
+       --><li><a href="/about/">About</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="http://github.com/yushusu">Projects</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"Copy to clipboard!\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "Copied!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>

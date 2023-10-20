@@ -14,7 +14,7 @@
 <meta property="og:description" content="ida mac fix the crash：（suggest using paradell windows） delete~&#x2F;.idapro&#x2F;ida.reg adb shell am start -D -n com.com.sec2023.rocketmouse.mouse&#x2F;com.unity3d.player.UnityPlayerActivityStarting:">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2023-10-05T13:57:26.000Z">
-<meta property="article:modified_time" content="2023-10-05T14:01:29.592Z">
+<meta property="article:modified_time" content="2023-10-06T07:35:26.195Z">
 <meta property="article:author" content="yushusu">
 <meta name="twitter:card" content="summary">
     
@@ -80,6 +80,8 @@
     <br/>
     <span id="actions">
       <ul>
+        
+        <li><a class="icon" aria-label="Previous post" href="/2023/10/20/Fuzzilli-REPRL/"><i class="fa-solid fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
         
         
         <li><a class="icon" aria-label="Next post" href="/2023/10/04/2018-N1ctf-baby-unity3d/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
@@ -153,27 +155,21 @@
 <p>adb shell am start -D -n com.com.sec2023.rocketmouse.mouse&#x2F;com.unity3d.player.UnityPlayerActivity<br>Starting: Intent { cmp&#x3D;com.com.sec2023.rocketmouse.mouse&#x2F;com.unity3d.player.UnityPlayerActivity }</p>
 <p><strong>Step 1 : Open ida to see if <a target="_blank" rel="noopener" href="http://libil2cpp.so/">libil2cpp.so</a> is encrypted. Use frida dump and find that there is a detection (hack detect). Modify the frida characteristics to bypass the memory dump detection:</strong></p>
 <p>we can modify the port number in the Frida source code, the temporary directory or the relevant string characteristics in the maps. For this one, we can directly modify the port <code>./fridasever -l 0.0.0.0:1234</code></p>
-<ol>
-<li>modify port</li>
-</ol>
+<p>modify port</p>
 <p>change Frida port to lisenning in frida-core&#x2F;src&#x2F;frida-gadget-server.c</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#define DEFAULT_LISTEN_ADDRESS &quot;127.0.0.1&quot;</span><br><span class="line">#define DEFAULT_LISTEN_PORT    27042</span><br></pre></td></tr></table></figure>
 
 <p>change the port behind DEFAULT_LISTEN_PORT</p>
-<ol>
-<li>temporary directory</li>
-</ol>
+<p>temporary directory</p>
 <p>frida-core&#x2F;src&#x2F;frida-helper-backend-linux.c</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">static gchar *</span><br><span class="line">frida_helper_backend_get_system_temp_path (void)</span><br><span class="line">&#123;</span><br><span class="line">  return g_strdup (&quot;/tmp&quot;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>change the “&#x2F;tmp” path</p>
-<ol>
-<li>maps relevant strings</li>
-</ol>
+<p>maps relevant strings</p>
 <p>frida-core&#x2F;src&#x2F;frida-helper-backend-linux.c</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">if (strstr (line, &quot;/libc.&quot;) || strstr (line, &quot;/libm.&quot;) || strstr (line, &quot;/libdl.&quot;))</span><br><span class="line">&#123;</span><br><span class="line">  frida_helper_backend_linux_parse_maps_entry (line, entry);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p>then using dump so1 script :</p>
+<p>then using dump so script :</p>
 <figure class="highlight jsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">dump_so</span>(<span class="params">so_name</span>) &#123;</span><br><span class="line">    <span class="title class_">Java</span>.<span class="title function_">perform</span>(<span class="keyword">function</span> (<span class="params"></span>) &#123;</span><br><span class="line">        <span class="keyword">var</span> currentApplication = <span class="title class_">Java</span>.<span class="title function_">use</span>(<span class="string">&quot;android.app.ActivityThread&quot;</span>).<span class="title function_">currentApplication</span>();</span><br><span class="line">        <span class="keyword">var</span> dir = currentApplication.<span class="title function_">getApplicationContext</span>().<span class="title function_">getFilesDir</span>().<span class="title function_">getPath</span>();</span><br><span class="line">        <span class="keyword">var</span> libso = <span class="title class_">Process</span>.<span class="title function_">getModuleByName</span>(so_name);</span><br><span class="line">        <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;[name]:&quot;</span>, libso.<span class="property">name</span>);</span><br><span class="line">        <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;[base]:&quot;</span>, libso.<span class="property">base</span>);</span><br><span class="line">        <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;[size]:&quot;</span>, <span class="title function_">ptr</span>(libso.<span class="property">size</span>));</span><br><span class="line">        <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;[path]:&quot;</span>, libso.<span class="property">path</span>);</span><br><span class="line">        <span class="keyword">var</span> file_path = dir + <span class="string">&quot;/&quot;</span> + libso.<span class="property">name</span> + <span class="string">&quot;_&quot;</span> + libso.<span class="property">base</span> + <span class="string">&quot;_&quot;</span> + <span class="title function_">ptr</span>(libso.<span class="property">size</span>) + <span class="string">&quot;.so&quot;</span>;</span><br><span class="line">        <span class="keyword">var</span> file_handle = <span class="keyword">new</span> <span class="title class_">File</span>(file_path, <span class="string">&quot;wb&quot;</span>);</span><br><span class="line">        <span class="keyword">if</span> (file_handle &amp;&amp; file_handle != <span class="literal">null</span>) &#123;</span><br><span class="line">				<span class="comment">//Memory.protect(ptr(libso.base.add(0x13b7000)), libso.size-0x13b7000, &#x27;rwx&#x27;);</span></span><br><span class="line">            <span class="title class_">Memory</span>.<span class="title function_">protect</span>(<span class="title function_">ptr</span>(libso.<span class="property">base</span>), libso.<span class="property">size</span>, <span class="string">&#x27;rwx&#x27;</span>);</span><br><span class="line">            <span class="keyword">var</span> libso_buffer = <span class="title function_">ptr</span>(libso.<span class="property">base</span>).<span class="title function_">readByteArray</span>(libso.<span class="property">size</span>);</span><br><span class="line">            file_handle.<span class="title function_">write</span>(libso_buffer);</span><br><span class="line">            file_handle.<span class="title function_">flush</span>();</span><br><span class="line">            file_handle.<span class="title function_">close</span>();</span><br><span class="line">            <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;[dump]:&quot;</span>, file_path);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line">rpc.<span class="property">exports</span> = &#123;</span><br><span class="line">    <span class="attr">dump_so</span>: dump_so</span><br><span class="line">&#125;;</span><br><span class="line"><span class="comment">//frida -H 127.0.0.1:1234 -l &quot;libil2cpp_dump.js&quot; -f &quot;com.com.sec2023.rocketmouse.mouse&quot;</span></span><br></pre></td></tr></table></figure>
 
 <p>then using Il2CppDumper dump dumped <a target="_blank" rel="noopener" href="http://libil2cpp.so/">libil2cpp.so</a> to get string information.</p>

